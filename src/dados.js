@@ -4,6 +4,8 @@ import { db } from './firebase';
 
 // Conta do dono: sempre pode editar e cuida da lista de editores (igual nas regras do Firestore).
 export const EMAIL_DONO = 'rcandrerc@gmail.com';
+// Contas que sempre editam (também fixas nas regras do Firestore).
+export const EDITORES_FIXOS = ['armazem111.oasis@gmail.com'];
 
 export const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 // Valores gravados: '' (folga), 'M' (manhã), 'N' (noite), 'MN' (dia todo).
