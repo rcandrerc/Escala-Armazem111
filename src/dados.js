@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc, addDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Conta do dono: sempre pode editar e cuida da lista de editores (igual nas regras do Firestore).
@@ -23,16 +23,17 @@ export function somarDias(d, n) {
   return x;
 }
 
-function useColecao(nome) {
-  const [lista, setLista] = useState(null);
-  useEffect(() => onSnapshot(collection(db, nome), (s) => setLista(s.docs.map((d) => ({ id: d.id, ...d.data() }))), () => setLista([])), [nome]);
-  return lista;
-}
-
-export const useFuncionarios = () => {
-  const l = useColecao('escala_funcionarios');
-  return l && [...l].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0) || a.nome.localeCompare(b.nome));
-};
+// Equipe fixa (não tem login): para mudar, é só editar esta lista.
+export const FUNCIONARIOS = [
+  { id: 'henrique', nome: 'Henrique', funcao: 'Cozinha' },
+  { id: 'jeferson', nome: 'Jeferson', funcao: 'Cozinha' },
+  { id: 'everton', nome: 'Everton', funcao: 'Cozinha' },
+  { id: 'ramon', nome: 'Ramon', funcao: 'Cozinha' },
+  { id: 'any', nome: 'Any', funcao: 'Salão' },
+  { id: 'lucas', nome: 'Lucas', funcao: 'Salão' },
+  { id: 'thiago', nome: 'Thiago', funcao: 'Salão' },
+  { id: 'joao', nome: 'João', funcao: 'Salão' },
+];
 
 // Turnos de uma semana: { [idFuncionario]: { [0..6]: texto } }
 export function useSemana(segundaIso) {
@@ -52,10 +53,6 @@ export function useEditores() {
 
 export const definirTurno = (segundaIso, funcId, dia, texto) =>
   setDoc(doc(db, 'escala_semanas', segundaIso), { turnos: { [funcId]: { [dia]: texto } } }, { merge: true });
-
-export const adicionarFuncionario = (nome, funcao, ordem) => addDoc(collection(db, 'escala_funcionarios'), { nome, funcao, ordem });
-export const editarFuncionario = (id, dados) => updateDoc(doc(db, 'escala_funcionarios', id), dados);
-export const removerFuncionario = (id) => deleteDoc(doc(db, 'escala_funcionarios', id));
 
 export const adicionarEditor = (email) => setDoc(doc(db, 'escala_config', 'editores'), { emails: arrayUnion(email.trim().toLowerCase()) }, { merge: true });
 export const removerEditor = (email) => setDoc(doc(db, 'escala_config', 'editores'), { emails: arrayRemove(email) }, { merge: true });

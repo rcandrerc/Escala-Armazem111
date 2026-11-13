@@ -3,8 +3,8 @@ import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedi
 import { auth, configurado } from './firebase';
 import {
   DIAS, TURNOS_PRONTOS, EMAIL_DONO, iso, segundaDe, somarDias,
-  useFuncionarios, useSemana, useEditores,
-  definirTurno, adicionarFuncionario, editarFuncionario, removerFuncionario, adicionarEditor, removerEditor,
+  FUNCIONARIOS, useSemana, useEditores,
+  definirTurno, adicionarEditor, removerEditor,
 } from './dados';
 
 const fmt = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -14,10 +14,10 @@ export default function Escala() {
   const [erro, setErro] = useState('');
   const [segunda, setSegunda] = useState(() => segundaDe(new Date()));
   const [cel, setCel] = useState(null); // { func, dia }
-  const [painel, setPainel] = useState(null); // 'equipe' | 'editores'
+  const [painel, setPainel] = useState(null); // 'editores'
 
   useEffect(() => (configurado ? onAuthStateChanged(auth, setUsuario) : undefined), []);
-  const funcionarios = useFuncionarios();
+  const funcionarios = FUNCIONARIOS;
   const editores = useEditores();
   const segundaIso = iso(segunda);
   const turnos = useSemana(segundaIso);
@@ -45,7 +45,7 @@ export default function Escala() {
     const linhas = [`*Escala Armazém 111* — semana ${fmt(segunda)} a ${fmt(somarDias(segunda, 6))}`];
     DIAS.forEach((nome, i) => {
       linhas.push('', `*${nome} ${fmt(somarDias(segunda, i))}*`);
-      (funcionarios || []).forEach((f) => { const t = textoDe(f, i); if (t) linhas.push(`${f.nome}: ${t}`); });
+      funcionarios.forEach((f) => { const t = textoDe(f, i); if (t) linhas.push(`${f.nome}: ${t}`); });
     });
     try { await navigator.clipboard.writeText(linhas.join('\n')); setErro('Escala copiada, é só colar no WhatsApp.'); }
     catch { setErro('Não consegui copiar.'); }
@@ -81,10 +81,9 @@ export default function Escala() {
         <button onClick={() => setSegunda(somarDias(segunda, 7))} aria-label="Próxima semana">›</button>
       </nav>
 
-      {funcionarios === null || turnos === null ? (
+      {turnos === null ? (
         <p className="aviso">Carregando…</p>
-      ) : funcionarios.length === 0 ? (
-        <p className="aviso">{editor ? 'Nenhum funcionário ainda. Toque em “Equipe” para cadastrar.' : 'A escala ainda não foi montada.'}</p>
+      
       ) : (
         <div className="rolagem">
           <table>
@@ -118,8 +117,7 @@ export default function Escala() {
       )}
 
       <div className="acoes">
-        <button className="botao" onClick={copiar} disabled={!funcionarios?.length}>📋 Copiar para o WhatsApp</button>
-        {editor && <button className="botao claro" onClick={() => setPainel('equipe')}>👥 Equipe</button>}
+        <button className="botao" onClick={copiar} >📋 Copiar para o WhatsApp</button>
         {dono && <button className="botao claro" onClick={() => setPainel('editores')}>🔑 Quem pode editar</button>}
       </div>
 
@@ -132,11 +130,6 @@ export default function Escala() {
               catch { setErro('Sem permissão para salvar. Confira se entrou com a conta certa.'); setCel(null); }
             }}
           />
-        </Janela>
-      )}
-      {painel === 'equipe' && (
-        <Janela titulo="Equipe" fechar={() => setPainel(null)}>
-          <Equipe funcionarios={funcionarios || []} />
         </Janela>
       )}
       {painel === 'editores' && (
@@ -171,38 +164,6 @@ function EditarTurno({ atual, salvar }) {
         <button className="botao">Salvar</button>
       </form>
       {atual && <button className="link perigo" onClick={() => salvar('')}>Limpar este dia</button>}
-    </>
-  );
-}
-
-function Equipe({ funcionarios }) {
-  const [nome, setNome] = useState('');
-  const [funcao, setFuncao] = useState('');
-  const [msg, setMsg] = useState('');
-  const tenta = async (fn) => { try { setMsg(''); await fn(); } catch { setMsg('Sem permissão ou falha de conexão.'); } };
-  return (
-    <>
-      <ul className="lista">
-        {funcionarios.map((f) => (
-          <li key={f.id}>
-            <input defaultValue={f.nome} aria-label="Nome" maxLength={40}
-              onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== f.nome && tenta(() => editarFuncionario(f.id, { nome: e.target.value.trim() }))} />
-            <input defaultValue={f.funcao} aria-label="Função" placeholder="Função" maxLength={30}
-              onBlur={(e) => e.target.value.trim() !== (f.funcao || '') && tenta(() => editarFuncionario(f.id, { funcao: e.target.value.trim() }))} />
-            <button className="link perigo" onClick={() => window.confirm(`Remover ${f.nome}?`) && tenta(() => removerFuncionario(f.id))}>Remover</button>
-          </li>
-        ))}
-      </ul>
-      <form className="linha" onSubmit={(e) => {
-        e.preventDefault();
-        if (!nome.trim()) return;
-        tenta(() => adicionarFuncionario(nome.trim(), funcao.trim(), funcionarios.length)).then(() => { setNome(''); setFuncao(''); });
-      }}>
-        <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome" maxLength={40} />
-        <input value={funcao} onChange={(e) => setFuncao(e.target.value)} placeholder="Função (garçom, cozinha…)" maxLength={30} />
-        <button className="botao">Adicionar</button>
-      </form>
-      {msg && <p className="erro">{msg}</p>}
     </>
   );
 }
