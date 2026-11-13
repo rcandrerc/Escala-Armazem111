@@ -4,9 +4,9 @@ import { auth, configurado } from './firebase';
 import {
   DIAS, EMAIL_DONO, PROXIMO_TURNO, ROTULO_TURNO, normalizarTurno, iso, segundaDe, somarDias,
   FUNCIONARIOS, useSemana, useMes, useEditores,
-  definirTurno, salvarSemanas, adicionarEditor, removerEditor,
+  definirTurno, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
 } from './dados';
-import { gerarMes, limparMes, FECHA_NA_SEGUNDA } from './gerar';
+import { gerarMes, FECHA_NA_SEGUNDA } from './gerar';
 
 const fmt = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 const GRUPOS = ['Cozinha', 'Salão'];
@@ -16,6 +16,7 @@ export default function Escala() {
   const [aviso, setAviso] = useState('');
   const [segunda, setSegunda] = useState(() => segundaDe(new Date()));
   const [painel, setPainel] = useState(false);
+  const [diaApagar, setDiaApagar] = useState(null);
   const [visao, setVisao] = useState('semana');
   const [mesRef, setMesRef] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1, 12));
 
@@ -63,13 +64,17 @@ export default function Escala() {
     } catch { setAviso('Não consegui salvar. Confira se entrou com a conta certa.'); }
   }
 
-  async function apagar() {
-    const ref = refMes();
-    if (!window.confirm(`Apagar TODA a escala de ${nomeMes(ref)}? Isso não dá para desfazer.`)) return;
-    try {
-      await salvarSemanas(limparMes(ref.getFullYear(), ref.getMonth()));
-      setAviso(`Escala de ${nomeMes(ref)} apagada.`);
-    } catch { setAviso('Não consegui apagar. Confira se entrou com a conta certa.'); }
+  async function apagarTodos() {
+    if (!window.confirm('Apagar TODA a escala (todas as semanas e meses)? Isso não dá para desfazer.')) return;
+    try { await apagarTudo(); setAviso('Escala inteira apagada.'); }
+    catch { setAviso('Não consegui apagar. Confira se entrou com a conta certa.'); }
+  }
+
+  async function apagarUmDia(data) {
+    const nome = data.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit' });
+    if (!window.confirm(`Apagar a escala de ${nome}?`)) return;
+    try { await apagarDia(data); setAviso(`Escala de ${nome} apagada.`); }
+    catch { setAviso('Não consegui apagar. Confira se entrou com a conta certa.'); }
   }
 
   async function copiar() {
@@ -141,7 +146,7 @@ export default function Escala() {
         <div className="dias">
           {dias.map(({ nome, i, data }) => (
             <section key={nome} className={`dia ${iso(data) === hojeIso ? 'hoje' : ''} ${fechado(i) ? 'fechado' : ''}`}>
-              <h2>{nome} <small>{fmt(data)}</small>{iso(data) === hojeIso && <em>hoje</em>}</h2>
+              <h2>{nome} <small>{fmt(data)}</small>{iso(data) === hojeIso && <em>hoje</em>}{editor && !fechado(i) && <button className="lixo" aria-label={`Apagar ${nome}`} onClick={() => apagarUmDia(data)}>🗑</button>}</h2>
               {fechado(i) ? <p className="ninguem">Fechado</p> : GRUPOS.map((g) => (
                 <div key={g} className="grupo">
                   <span className="rotulo">{g}</span>
@@ -168,9 +173,21 @@ export default function Escala() {
       <div className="acoes">
         <button className="botao" onClick={copiar}>📋 Copiar para o WhatsApp</button>
         {editor && <button className="botao claro" onClick={gerar}>✨ Montar o mês automático</button>}
-        {editor && <button className="botao claro perigo" onClick={apagar}>🗑 Apagar o mês</button>}
+        {editor && <button className="botao claro perigo" onClick={() => setDiaApagar(iso(new Date()))}>🗑 Apagar o dia</button>}
+        {editor && <button className="botao claro perigo" onClick={apagarTodos}>🗑 Apagar tudo</button>}
         {dono && <button className="botao claro" onClick={() => setPainel(true)}>🔑 Quem pode editar</button>}
       </div>
+
+      {diaApagar !== null && (
+        <div className="fundo-janela" onClick={() => setDiaApagar(null)}>
+          <div className="janela" role="dialog" aria-label="Apagar o dia" onClick={(ev) => ev.stopPropagation()}>
+            <div className="janela-topo"><h2>Apagar o dia</h2><button className="link" onClick={() => setDiaApagar(null)}>Fechar</button></div>
+            <p className="suave">Escolha o dia que quer limpar para refazer.</p>
+            <input type="date" value={diaApagar} onChange={(ev) => setDiaApagar(ev.target.value)} />
+            <button className="botao" disabled={!diaApagar} onClick={() => { const [y, m, dd] = diaApagar.split('-').map(Number); setDiaApagar(null); apagarUmDia(new Date(y, m - 1, dd, 12)); }}>Apagar este dia</button>
+          </div>
+        </div>
+      )}
 
       {painel && (
         <div className="fundo-janela" onClick={() => setPainel(false)}>

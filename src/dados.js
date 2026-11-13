@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { doc, onSnapshot, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, onSnapshot, setDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Conta do dono: sempre pode editar e cuida da lista de editores (igual nas regras do Firestore).
@@ -84,3 +84,16 @@ export const definirTurno = (segundaIso, funcId, dia, texto) =>
 
 export const adicionarEditor = (email) => setDoc(doc(db, 'escala_config', 'editores'), { emails: arrayUnion(email.trim().toLowerCase()) }, { merge: true });
 export const removerEditor = (email) => setDoc(doc(db, 'escala_config', 'editores'), { emails: arrayRemove(email) }, { merge: true });
+
+// Apaga todas as semanas já preenchidas.
+export async function apagarTudo() {
+  const s = await getDocs(collection(db, 'escala_semanas'));
+  await Promise.all(s.docs.map((x) => deleteDoc(x.ref)));
+}
+
+// Limpa só um dia (data = Date) para todos os funcionários.
+export function apagarDia(data) {
+  const turnos = {};
+  FUNCIONARIOS.forEach((f) => { turnos[f.id] = { [(data.getDay() + 6) % 7]: '' }; });
+  return setDoc(doc(db, 'escala_semanas', iso(segundaDe(data))), { turnos }, { merge: true });
+}
