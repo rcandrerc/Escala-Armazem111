@@ -1,0 +1,21 @@
+{
+  "name": "escala-armazem-111",
+  "version": "1.0.0",
+  "description": "Escala de funcionários do restaurante Armazém 111",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "firebase": "^12.19.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.2.0",
+    "vite": "^7.3.7"
+  },
+  "private": true,
+  "type": "module"
+}

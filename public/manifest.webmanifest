@@ -1,0 +1,13 @@
+{
+  "name": "Escala Armazém 111",
+  "short_name": "Escala 111",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "id": "./",
+  "display": "standalone",
+  "background_color": "#faf6f1",
+  "theme_color": "#7a1f2b",
+  "description": "Escala de funcionários do restaurante Armazém 111",
+  "icons": [{ "src": "icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

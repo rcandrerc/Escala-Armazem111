@@ -1,0 +1,46 @@
+# Publica a escala no GitHub Pages a cada push na main.
+name: Publicar no GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_FIREBASE_API_KEY: AIzaSyBZBG0BgZJYyVBYfOb0Wao_zJU8TZ8HM8I
+      VITE_FIREBASE_AUTH_DOMAIN: agenda-luiza.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: agenda-luiza
+      VITE_FIREBASE_APP_ID: 1:499445008247:web:2f33f354854e010dd0c372
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  publicar:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
