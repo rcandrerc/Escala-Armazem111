@@ -40,3 +40,26 @@ export function gerarMes(ano, mes, modelo) {
   }
   return resultado;
 }
+
+// Quantos turnos ficam abaixo do mínimo (2 por turno em cada área) no resultado.
+export function contarBuracos(resultado, minimo = 2) {
+  let x = 0;
+  Object.values(resultado).forEach((t) => {
+    for (let i = 0; i < 7; i++) {
+      if (!FUNCIONARIOS.some((f) => t[f.id]?.[i] !== undefined) || (FECHA_NA_SEGUNDA && i === 0)) continue;
+      [...new Set(FUNCIONARIOS.map((f) => f.funcao))].forEach((g) => ['M', 'N'].forEach((s) => {
+        const tem = FUNCIONARIOS.filter((f) => f.funcao === g && (t[f.id]?.[i] || '').includes(s)).length;
+        x += Math.max(0, minimo - tem);
+      }));
+    }
+  });
+  return x;
+}
+
+// Testa os modelos e fica com o que deixa menos buraco.
+export function melhorModelo(ano, mes) {
+  return ['5x2', '12x36']
+    .map((m) => ({ modelo: m, resultado: gerarMes(ano, mes, m) }))
+    .map((o) => ({ ...o, buracos: contarBuracos(o.resultado) }))
+    .sort((a, b) => a.buracos - b.buracos)[0];
+}

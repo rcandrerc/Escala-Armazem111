@@ -6,7 +6,7 @@ import {
   FUNCIONARIOS, useSemana, useMes, useEditores,
   definirTurno, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
 } from './dados';
-import { gerarMes, FECHA_NA_SEGUNDA } from './gerar';
+import { gerarMes, melhorModelo, contarBuracos, FECHA_NA_SEGUNDA } from './gerar';
 
 // Mínimo de pessoas por turno em cada área. Quando falta, o app avisa para chamar extra.
 const MINIMO = 2;
@@ -38,7 +38,7 @@ export default function Escala() {
   const semanaDoc = useSemana(segundaIso);
   const turnos = semanaDoc && (semanaDoc.turnos || {});
   const modeloSemana = semanaDoc?.modelo || MODELO_PADRAO;
-  const [modelo, setModelo] = useState(MODELO_PADRAO);
+  const [modelo, setModelo] = useState('auto');
 
   if (!configurado) return <p className="aviso">Firebase não configurado.</p>;
 
@@ -72,10 +72,14 @@ export default function Escala() {
 
   async function gerar() {
     const ref = refMes();
-    if (!window.confirm(`Montar a escala ${modelo} de ${nomeMes(ref)}? Isso substitui o que já está preenchido nesse mês.`)) return;
+    const qual = modelo === 'auto' ? 'automática (o modelo que deixa menos buraco)' : modelo;
+    if (!window.confirm(`Montar a escala ${qual} de ${nomeMes(ref)}? Isso substitui o que já está preenchido nesse mês.`)) return;
+    const esc = modelo === 'auto'
+      ? melhorModelo(ref.getFullYear(), ref.getMonth())
+      : (() => { const r = gerarMes(ref.getFullYear(), ref.getMonth(), modelo); return { modelo, resultado: r, buracos: contarBuracos(r) }; })();
     try {
-      await salvarSemanas(gerarMes(ref.getFullYear(), ref.getMonth(), modelo), modelo);
-      setAviso(`Escala de ${nomeMes(ref)} montada. Ajuste o que precisar tocando nos nomes.`);
+      await salvarSemanas(esc.resultado, esc.modelo);
+      setAviso(`Escala ${esc.modelo} de ${nomeMes(ref)} montada. ${esc.buracos ? `Faltam ${esc.buracos} turnos para ter 2 em cada setor: veja os ⚠️.` : 'Sem buracos.'}`);
     } catch { setAviso('Não consegui salvar. Confira se entrou com a conta certa.'); }
   }
 
@@ -195,6 +199,7 @@ export default function Escala() {
         {editor && (
           <span className="gerar">
             <select value={modelo} onChange={(ev) => setModelo(ev.target.value)} aria-label="Modelo da escala">
+              <option value="auto">Automático</option>
               {Object.keys(MODELOS).map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
             <button className="botao claro" onClick={gerar}>✨ Montar o mês</button>
