@@ -171,6 +171,8 @@ export default function Escala() {
   );
 }
 
+const Nome = ({ f }) => <span className="nm"><span className="longo">{f.nome}</span><span className="curto">{f.nome.slice(0, 3)}</span></span>;
+
 // Calendário do mês: por dia, quantos vão de manhã e à noite e quem está de folga.
 function Mes({ ref0, hojeIso, abrir }) {
   const ano = ref0.getFullYear();
@@ -189,20 +191,21 @@ function Mes({ ref0, hojeIso, abrir }) {
         const fora = data.getMonth() !== mes;
         const t = dados[iso(segundaDe(data))] || {};
         const turno = (f) => normalizarTurno(t[f.id]?.[i]);
-        const m = FUNCIONARIOS.filter((f) => turno(f).includes('M')).length;
-        const n = FUNCIONARIOS.filter((f) => turno(f).includes('N')).length;
-        const folgas = FUNCIONARIOS.filter((f) => !turno(f)).map((f) => f.nome);
+        const quem = (x) => FUNCIONARIOS.filter((f) => turno(f).includes(x));
+        const m = quem('M');
+        const n = quem('N');
+        const folgas = FUNCIONARIOS.filter((f) => !turno(f));
         const fechada = FECHA_NA_SEGUNDA && i === 0;
-        const vazio = m + n === 0;
+        const vazio = m.length + n.length === 0;
         return (
           <button key={iso(data)} disabled={fora} onClick={() => abrir(data)}
             className={`mes-dia ${fora ? 'fora' : ''} ${iso(data) === hojeIso ? 'hoje' : ''} ${fechada ? 'fechado' : ''}`}>
             <b>{data.getDate()}</b>
             {!fora && (fechada ? <span className="mes-fecha">Fechado</span> : vazio ? <span className="mes-vazio">—</span> : (
               <>
-                <span className="mes-m">☀ {m}</span>
-                <span className="mes-n">🌙 {n}</span>
-                {folgas.length > 0 && <span className="mes-folga">Folga: {folgas.join(', ')}</span>}
+                <span className="mes-m">☀ {m.map((f) => <Nome key={f.id} f={f} />)}</span>
+                <span className="mes-n">🌙 {n.map((f) => <Nome key={f.id} f={f} />)}</span>
+                {folgas.length > 0 && <span className="mes-folga">FOLGA {folgas.map((f) => <Nome key={f.id} f={f} />)}</span>}
               </>
             ))}
           </button>

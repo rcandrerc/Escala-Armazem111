@@ -86,5 +86,15 @@ span.chip { min-height:0; padding:7px 14px; display:inline-block; }
 .mes-m { color:#9a6a00; font-weight:700; }
 .mes-n { color:#4a5fb3; font-weight:700; }
 @media (prefers-color-scheme: dark) { .mes-m { color:#f0b429; } .mes-n { color:#9db0ff; } }
-.mes-folga { color:var(--suave); font-size:10px; line-height:1.15; overflow-wrap:anywhere; }
+
 .mes-fecha, .mes-vazio { color:var(--suave); }
+
+.mes-dia { min-height:120px; }
+.mes-m, .mes-n { display:block; font-size:11px; line-height:1.25; }
+.mes-m .nm, .mes-n .nm { display:inline-block; font-weight:600; margin-right:4px; }
+.mes-m .nm { color:#7a5200; } .mes-n .nm { color:#3a4a99; }
+.mes-folga { display:block; background:#c0392b; color:#fff; border-radius:6px; padding:3px 4px; font-size:10px; font-weight:800; line-height:1.3; }
+.mes-folga .nm { display:inline-block; font-weight:700; margin-left:3px; }
+.curto { display:none; }
+@media (max-width:640px) { .longo { display:none; } .curto { display:inline; } .mes { gap:2px; padding:0 4px; } .mes-dia { padding:3px; } .mes-m, .mes-n { font-size:10px; } .mes-folga { font-size:9px; } }
+@media (prefers-color-scheme: dark) { .mes-m .nm { color:#f0b429; } .mes-n .nm { color:#9db0ff; } .mes-folga { background:#9b2c20; } }
