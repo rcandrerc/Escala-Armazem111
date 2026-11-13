@@ -72,3 +72,19 @@ span.chip { min-height:0; padding:7px 14px; display:inline-block; }
 .chip.t-N { background:#2d3a6b; border-color:#2d3a6b; color:#fff; }
 .chip.t-MN { background:var(--vinho); border-color:var(--vinho); color:#fff; }
 .dia.fechado { opacity:.6; }
+
+.abas { display:flex; gap:8px; padding:12px 16px 0; }
+.abas button { flex:1; padding:10px; border-radius:12px; border:2px solid var(--linha); background:var(--sup); color:var(--texto); font-weight:700; }
+.abas button.on { background:var(--vinho); border-color:var(--vinho); color:#fff; }
+.mes { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; padding:0 8px; }
+.mes-cab { text-align:center; font-size:12px; font-weight:700; color:var(--suave); padding:4px 0; }
+.mes-dia { display:flex; flex-direction:column; align-items:stretch; gap:2px; text-align:left; min-height:88px; padding:5px; border-radius:10px; border:1px solid var(--linha); background:var(--sup); color:var(--texto); font-size:11px; overflow:hidden; }
+.mes-dia b { font-size:14px; }
+.mes-dia.fora { opacity:.3; }
+.mes-dia.hoje { border:2px solid var(--vinho); }
+.mes-dia.fechado { background:var(--fundo); color:var(--suave); }
+.mes-m { color:#9a6a00; font-weight:700; }
+.mes-n { color:#4a5fb3; font-weight:700; }
+@media (prefers-color-scheme: dark) { .mes-m { color:#f0b429; } .mes-n { color:#9db0ff; } }
+.mes-folga { color:var(--suave); font-size:10px; line-height:1.15; overflow-wrap:anywhere; }
+.mes-fecha, .mes-vazio { color:var(--suave); }

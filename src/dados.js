@@ -51,6 +51,25 @@ export function useSemana(segundaIso) {
   return turnos;
 }
 
+// Todas as semanas que tocam o mês: { [segundaIso]: turnos }. null enquanto carrega.
+export function useMes(ano, mes) {
+  const [dados, setDados] = useState(null);
+  useEffect(() => {
+    setDados(null);
+    const segundas = [];
+    for (let s = segundaDe(new Date(ano, mes, 1, 12)); s <= new Date(ano, mes + 1, 0, 12); s = somarDias(s, 7)) segundas.push(iso(s));
+    const acc = {};
+    const faltam = new Set(segundas);
+    const fns = segundas.map((seg) => onSnapshot(doc(db, 'escala_semanas', seg), (s) => {
+      acc[seg] = s.exists() ? s.data().turnos || {} : {};
+      faltam.delete(seg);
+      if (!faltam.size) setDados({ ...acc });
+    }, () => { acc[seg] = {}; faltam.delete(seg); if (!faltam.size) setDados({ ...acc }); }));
+    return () => fns.forEach((f) => f());
+  }, [ano, mes]);
+  return dados;
+}
+
 export function useEditores() {
   const [emails, setEmails] = useState([]);
   useEffect(() => onSnapshot(doc(db, 'escala_config', 'editores'), (s) => setEmails(s.exists() ? s.data().emails || [] : []), () => {}), []);

@@ -3,7 +3,7 @@ import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedi
 import { auth, configurado } from './firebase';
 import {
   DIAS, EMAIL_DONO, PROXIMO_TURNO, ROTULO_TURNO, normalizarTurno, iso, segundaDe, somarDias,
-  FUNCIONARIOS, useSemana, useEditores,
+  FUNCIONARIOS, useSemana, useMes, useEditores,
   definirTurno, salvarSemanas, adicionarEditor, removerEditor,
 } from './dados';
 import { gerarMes, FECHA_NA_SEGUNDA } from './gerar';
@@ -16,6 +16,8 @@ export default function Escala() {
   const [aviso, setAviso] = useState('');
   const [segunda, setSegunda] = useState(() => segundaDe(new Date()));
   const [painel, setPainel] = useState(false);
+  const [visao, setVisao] = useState('semana');
+  const [mesRef, setMesRef] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1, 12));
 
   useEffect(() => (configurado ? onAuthStateChanged(auth, setUsuario) : undefined), []);
   const editores = useEditores();
@@ -95,6 +97,24 @@ export default function Escala() {
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {editor && <p className="dica">Toque no nome para mudar: folga → manhã → noite → dia todo.</p>}
 
+      <div className="abas">
+        <button className={visao === 'semana' ? 'on' : ''} onClick={() => setVisao('semana')}>Semana</button>
+        <button className={visao === 'mes' ? 'on' : ''} onClick={() => { setMesRef(new Date(segunda.getFullYear(), segunda.getMonth(), 1, 12)); setVisao('mes'); }}>📅 Mês</button>
+      </div>
+
+      {visao === 'mes' ? (
+        <>
+          <nav className="semana">
+            <button onClick={() => setMesRef(new Date(mesRef.getFullYear(), mesRef.getMonth() - 1, 1, 12))} aria-label="Mês anterior">‹</button>
+            <button className="atual" onClick={() => setMesRef(new Date(new Date().getFullYear(), new Date().getMonth(), 1, 12))}>
+              {mesRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            </button>
+            <button onClick={() => setMesRef(new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 1, 12))} aria-label="Próximo mês">›</button>
+          </nav>
+          <Mes ref0={mesRef} hojeIso={hojeIso} abrir={(data) => { setSegunda(segundaDe(data)); setVisao('semana'); }} />
+        </>
+      ) : (
+      <>
       <nav className="semana">
         <button onClick={() => setSegunda(somarDias(segunda, -7))} aria-label="Semana anterior">‹</button>
         <button className="atual" onClick={() => setSegunda(segundaDe(new Date()))}>
@@ -130,6 +150,8 @@ export default function Escala() {
           ))}
         </div>
       )}
+      </>
+      )}
 
       <div className="acoes">
         <button className="botao" onClick={copiar}>📋 Copiar para o WhatsApp</button>
@@ -145,6 +167,47 @@ export default function Escala() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Calendário do mês: por dia, quantos vão de manhã e à noite e quem está de folga.
+function Mes({ ref0, hojeIso, abrir }) {
+  const ano = ref0.getFullYear();
+  const mes = ref0.getMonth();
+  const dados = useMes(ano, mes);
+  if (!dados) return <p className="aviso">Carregando…</p>;
+  const ini = segundaDe(new Date(ano, mes, 1, 12));
+  const fim = new Date(ano, mes + 1, 0, 12);
+  const celulas = [];
+  for (let d = ini; d <= somarDias(segundaDe(fim), 6); d = somarDias(d, 1)) celulas.push(d);
+  return (
+    <div className="mes">
+      {DIAS.map((n) => <div key={n} className="mes-cab">{n}</div>)}
+      {celulas.map((data) => {
+        const i = (data.getDay() + 6) % 7;
+        const fora = data.getMonth() !== mes;
+        const t = dados[iso(segundaDe(data))] || {};
+        const turno = (f) => normalizarTurno(t[f.id]?.[i]);
+        const m = FUNCIONARIOS.filter((f) => turno(f).includes('M')).length;
+        const n = FUNCIONARIOS.filter((f) => turno(f).includes('N')).length;
+        const folgas = FUNCIONARIOS.filter((f) => !turno(f)).map((f) => f.nome);
+        const fechada = FECHA_NA_SEGUNDA && i === 0;
+        const vazio = m + n === 0;
+        return (
+          <button key={iso(data)} disabled={fora} onClick={() => abrir(data)}
+            className={`mes-dia ${fora ? 'fora' : ''} ${iso(data) === hojeIso ? 'hoje' : ''} ${fechada ? 'fechado' : ''}`}>
+            <b>{data.getDate()}</b>
+            {!fora && (fechada ? <span className="mes-fecha">Fechado</span> : vazio ? <span className="mes-vazio">—</span> : (
+              <>
+                <span className="mes-m">☀ {m}</span>
+                <span className="mes-n">🌙 {n}</span>
+                {folgas.length > 0 && <span className="mes-folga">Folga: {folgas.join(', ')}</span>}
+              </>
+            ))}
+          </button>
+        );
+      })}
     </div>
   );
 }
