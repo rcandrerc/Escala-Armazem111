@@ -10,8 +10,8 @@ export const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 export const PROXIMO_TURNO = { '': 'M', M: 'N', N: 'MN', MN: '' };
 // Modelos de escala. M/N são os dois turnos; o rótulo muda conforme o modelo da semana.
 export const MODELOS = {
-  '5x2': { nome: '5x2', M: 'Manhã 8h–17h24', N: 'Tarde 14h–23h24' },
-  '12x36': { nome: '12x36', M: '8h–20h', N: '11h30–23h30' },
+  '5x2': { nome: '5x2', M: 'Manhã 8h–17h24', N: 'Tarde 14h–23h24', curtoM: '8h–17h24', curtoN: '14h–23h24' },
+  '12x36': { nome: '12x36', M: '8h–20h', N: '11h30–23h30', curtoM: '8h–20h', curtoN: '11h30–23h30' },
 };
 export const MODELO_PADRAO = '5x2';
 export const rotuloTurno = (modelo, t) => (t === 'MN' ? 'Dia todo' : (MODELOS[modelo] || MODELOS[MODELO_PADRAO])[t]);
@@ -67,7 +67,7 @@ export function useMes(ano, mes) {
     const acc = {};
     const faltam = new Set(segundas);
     const fns = segundas.map((seg) => onSnapshot(doc(db, 'escala_semanas', seg), (s) => {
-      acc[seg] = s.exists() ? s.data().turnos || {} : {};
+      acc[seg] = s.exists() ? s.data() : {};
       faltam.delete(seg);
       if (!faltam.size) setDados({ ...acc });
     }, () => { acc[seg] = {}; faltam.delete(seg); if (!faltam.size) setDados({ ...acc }); }));

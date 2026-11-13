@@ -244,7 +244,9 @@ function Mes({ ref0, hojeIso, abrir }) {
       {celulas.map((data) => {
         const i = (data.getDay() + 6) % 7;
         const fora = data.getMonth() !== mes;
-        const t = dados[iso(segundaDe(data))] || {};
+        const sd = dados[iso(segundaDe(data))] || {};
+        const t = sd.turnos || {};
+        const md = MODELOS[sd.modelo] || MODELOS[MODELO_PADRAO];
         const turno = (f) => normalizarTurno(t[f.id]?.[i]);
         const quem = (x) => FUNCIONARIOS.filter((f) => turno(f).includes(x));
         const m = quem('M');
@@ -259,8 +261,8 @@ function Mes({ ref0, hojeIso, abrir }) {
             <b>{data.getDate()}{falta.length > 0 && <span className="mes-alerta" title="Falta gente: chamar extra"> ⚠️</span>}</b>
             {!fora && (fechada ? <span className="mes-fecha">Fechado</span> : vazio ? <span className="mes-vazio">—</span> : (
               <>
-                <span className="mes-m">☀ {m.map((f) => <Nome key={f.id} f={f} />)}</span>
-                <span className="mes-n">🌙 {n.map((f) => <Nome key={f.id} f={f} />)}</span>
+                <span className="mes-m"><i>{md.curtoM}</i>{m.map((f) => <Nome key={f.id} f={f} />)}</span>
+                <span className="mes-n"><i>{md.curtoN}</i>{n.map((f) => <Nome key={f.id} f={f} />)}</span>
                 {folgas.length > 0 && <span className="mes-folga">FOLGA {folgas.map((f) => <Nome key={f.id} f={f} />)}</span>}
               </>
             ))}
