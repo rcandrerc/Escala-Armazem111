@@ -41,3 +41,13 @@ export function gerarMes(ano, mes) {
   }
   return resultado;
 }
+
+// Mesma estrutura de gerarMes, mas com tudo vazio (usado para apagar o mês).
+export function limparMes(ano, mes) {
+  const r = {};
+  for (let d = new Date(ano, mes, 1, 12); d.getMonth() === mes; d = somarDias(d, 1)) {
+    const semana = (r[iso(segundaDe(d))] ||= {});
+    FUNCIONARIOS.forEach((f) => { (semana[f.id] ||= {})[(d.getDay() + 6) % 7] = ''; });
+  }
+  return r;
+}

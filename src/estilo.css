@@ -98,3 +98,5 @@ span.chip { min-height:0; padding:7px 14px; display:inline-block; }
 .curto { display:none; }
 @media (max-width:640px) { .longo { display:none; } .curto { display:inline; } .mes { gap:2px; padding:0 4px; } .mes-dia { padding:3px; } .mes-m, .mes-n { font-size:10px; } .mes-folga { font-size:9px; } }
 @media (prefers-color-scheme: dark) { .mes-m .nm { color:#f0b429; } .mes-n .nm { color:#9db0ff; } .mes-folga { background:#9b2c20; } }
+
+.botao.perigo { color:var(--erro); }

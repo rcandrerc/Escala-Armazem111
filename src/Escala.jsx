@@ -6,7 +6,7 @@ import {
   FUNCIONARIOS, useSemana, useMes, useEditores,
   definirTurno, salvarSemanas, adicionarEditor, removerEditor,
 } from './dados';
-import { gerarMes, FECHA_NA_SEGUNDA } from './gerar';
+import { gerarMes, limparMes, FECHA_NA_SEGUNDA } from './gerar';
 
 const fmt = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 const GRUPOS = ['Cozinha', 'Salão'];
@@ -50,14 +50,26 @@ export default function Escala() {
     catch { setAviso('Sem permissão para salvar. Confira se entrou com a conta certa.'); }
   }
 
+  // Mês em foco: o da aba Mês, ou o da semana que está na tela.
+  const refMes = () => (visao === 'mes' ? mesRef : new Date(segunda.getFullYear(), segunda.getMonth(), 1, 12));
+  const nomeMes = (r) => r.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
   async function gerar() {
-    const ref = new Date(segunda.getFullYear(), segunda.getMonth(), 1, 12);
-    const nome = ref.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-    if (!window.confirm(`Montar a escala de ${nome} automaticamente? Isso substitui o que já está preenchido nesse mês.`)) return;
+    const ref = refMes();
+    if (!window.confirm(`Montar a escala de ${nomeMes(ref)} automaticamente? Isso substitui o que já está preenchido nesse mês.`)) return;
     try {
       await salvarSemanas(gerarMes(ref.getFullYear(), ref.getMonth()));
-      setAviso(`Escala de ${nome} montada. Ajuste o que precisar tocando nos nomes.`);
+      setAviso(`Escala de ${nomeMes(ref)} montada. Ajuste o que precisar tocando nos nomes.`);
     } catch { setAviso('Não consegui salvar. Confira se entrou com a conta certa.'); }
+  }
+
+  async function apagar() {
+    const ref = refMes();
+    if (!window.confirm(`Apagar TODA a escala de ${nomeMes(ref)}? Isso não dá para desfazer.`)) return;
+    try {
+      await salvarSemanas(limparMes(ref.getFullYear(), ref.getMonth()));
+      setAviso(`Escala de ${nomeMes(ref)} apagada.`);
+    } catch { setAviso('Não consegui apagar. Confira se entrou com a conta certa.'); }
   }
 
   async function copiar() {
@@ -156,6 +168,7 @@ export default function Escala() {
       <div className="acoes">
         <button className="botao" onClick={copiar}>📋 Copiar para o WhatsApp</button>
         {editor && <button className="botao claro" onClick={gerar}>✨ Montar o mês automático</button>}
+        {editor && <button className="botao claro perigo" onClick={apagar}>🗑 Apagar o mês</button>}
         {dono && <button className="botao claro" onClick={() => setPainel(true)}>🔑 Quem pode editar</button>}
       </div>
 
