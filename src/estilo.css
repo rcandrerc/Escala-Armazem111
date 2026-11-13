@@ -116,3 +116,5 @@ span.chip { min-height:0; padding:7px 14px; display:inline-block; }
 .mes-n i { background:#2d3a6b; color:#fff; }
 .mes-dia { min-height:150px; }
 @media (max-width:640px) { .mes-m i, .mes-n i { font-size:8.5px; padding:1px 2px; letter-spacing:-.02em; } }
+
+.buraco.resumo { margin:0 8px 8px; }

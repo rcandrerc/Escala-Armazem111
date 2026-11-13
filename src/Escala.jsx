@@ -8,12 +8,14 @@ import {
 } from './dados';
 import { gerarMes, FECHA_NA_SEGUNDA } from './gerar';
 
-// Turnos sem ninguém numa área (só em dia já preenchido): avisam para chamar extra.
+// Mínimo de pessoas por turno em cada área. Quando falta, o app avisa para chamar extra.
+const MINIMO = 2;
 function buracos(turno) {
   if (!FUNCIONARIOS.some((f) => turno(f))) return [];
   const r = [];
   GRUPOS.forEach((g) => ['M', 'N'].forEach((t) => {
-    if (!FUNCIONARIOS.some((f) => f.funcao === g && turno(f).includes(t))) r.push({ g, t });
+    const tem = FUNCIONARIOS.filter((f) => f.funcao === g && turno(f).includes(t)).length;
+    if (tem < MINIMO) r.push({ g, t, falta: MINIMO - tem });
   }));
   return r;
 }
@@ -162,8 +164,8 @@ export default function Escala() {
           {dias.map(({ nome, i, data }) => (
             <section key={nome} className={`dia ${iso(data) === hojeIso ? 'hoje' : ''} ${fechado(i) ? 'fechado' : ''}`}>
               <h2>{nome} <small>{fmt(data)}</small>{iso(data) === hojeIso && <em>hoje</em>}{editor && !fechado(i) && <button className="lixo" aria-label={`Apagar ${nome}`} onClick={() => apagarUmDia(data)}>🗑</button>}</h2>
-              {!fechado(i) && buracos((f) => turnoDe(f, i)).map(({ g, t }) => (
-                <p key={g + t} className="buraco">⚠️ Falta {g.toLowerCase()} · {rotuloTurno(modeloSemana, t)}. Chamar extra ou freelancer.</p>
+              {!fechado(i) && buracos((f) => turnoDe(f, i)).map(({ g, t, falta }) => (
+                <p key={g + t} className="buraco">⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}. Chamar {falta > 1 ? `${falta} extras` : '1 extra'}.</p>
               ))}
               {fechado(i) ? <p className="ninguem">Fechado</p> : GRUPOS.map((g) => (
                 <div key={g} className="grupo">
@@ -238,7 +240,16 @@ function Mes({ ref0, hojeIso, abrir }) {
   const fim = new Date(ano, mes + 1, 0, 12);
   const celulas = [];
   for (let d = ini; d <= somarDias(segundaDe(fim), 6); d = somarDias(d, 1)) celulas.push(d);
+  let extras = 0;
+  celulas.forEach((data) => {
+    const i = (data.getDay() + 6) % 7;
+    if (data.getMonth() !== mes || (FECHA_NA_SEGUNDA && i === 0)) return;
+    const t = (dados[iso(segundaDe(data))] || {}).turnos || {};
+    buracos((f) => normalizarTurno(t[f.id]?.[i])).forEach((b) => { extras += b.falta; });
+  });
   return (
+    <>
+    {extras > 0 && <p className="buraco resumo">⚠️ Neste mês faltam {extras} turnos para fechar o mínimo de {MINIMO} por turno. Chame extra ou freelancer nos dias marcados.</p>}
     <div className="mes">
       {DIAS.map((n) => <div key={n} className="mes-cab">{n}</div>)}
       {celulas.map((data) => {
@@ -258,7 +269,7 @@ function Mes({ ref0, hojeIso, abrir }) {
         return (
           <button key={iso(data)} disabled={fora} onClick={() => abrir(data)}
             className={`mes-dia ${falta.length ? 'falta' : ''} ${fora ? 'fora' : ''} ${iso(data) === hojeIso ? 'hoje' : ''} ${fechada ? 'fechado' : ''}`}>
-            <b>{data.getDate()}{falta.length > 0 && <span className="mes-alerta" title="Falta gente: chamar extra"> ⚠️</span>}</b>
+            <b>{data.getDate()}{falta.length > 0 && <span className="mes-alerta" title="Falta gente: chamar extra"> ⚠️{falta.reduce((s, x) => s + x.falta, 0)}</span>}</b>
             {!fora && (fechada ? <span className="mes-fecha">Fechado</span> : vazio ? <span className="mes-vazio">—</span> : (
               <>
                 <span className="mes-m"><i>{md.curtoM}</i>{m.map((f) => <Nome key={f.id} f={f} />)}</span>
@@ -270,6 +281,7 @@ function Mes({ ref0, hojeIso, abrir }) {
         );
       })}
     </div>
+    </>
   );
 }
 
