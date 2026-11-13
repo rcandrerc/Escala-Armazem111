@@ -28,15 +28,17 @@ export function somarDias(d, n) {
 }
 
 // Equipe fixa (não tem login): para mudar, é só editar esta lista.
+// Turno fixo de cada um: 'M' (manhã) ou 'N' (noite). A ordem dentro de cada área alterna
+// manhã/noite de propósito: assim a folga de domingo reveza entre os dois turnos.
 export const FUNCIONARIOS = [
-  { id: 'henrique', nome: 'Henrique', funcao: 'Cozinha' },
-  { id: 'jeferson', nome: 'Jeferson', funcao: 'Cozinha' },
-  { id: 'everton', nome: 'Everton', funcao: 'Cozinha' },
-  { id: 'ramon', nome: 'Ramon', funcao: 'Cozinha' },
-  { id: 'any', nome: 'Any', funcao: 'Salão' },
-  { id: 'lucas', nome: 'Lucas', funcao: 'Salão' },
-  { id: 'thiago', nome: 'Thiago', funcao: 'Salão' },
-  { id: 'joao', nome: 'João', funcao: 'Salão' },
+  { id: 'henrique', nome: 'Henrique', funcao: 'Cozinha', turno: 'M' },
+  { id: 'ramon', nome: 'Ramon', funcao: 'Cozinha', turno: 'N' },
+  { id: 'everton', nome: 'Everton', funcao: 'Cozinha', turno: 'M' },
+  { id: 'jeferson', nome: 'Jeferson', funcao: 'Cozinha', turno: 'N' },
+  { id: 'any', nome: 'Any', funcao: 'Salão', turno: 'M' },
+  { id: 'thiago', nome: 'Thiago', funcao: 'Salão', turno: 'N' },
+  { id: 'lucas', nome: 'Lucas', funcao: 'Salão', turno: 'M' },
+  { id: 'joao', nome: 'João', funcao: 'Salão', turno: 'N' },
 ];
 
 // Turnos de uma semana: { [idFuncionario]: { [0..6]: texto } }
