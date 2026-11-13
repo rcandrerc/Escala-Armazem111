@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import { auth, configurado } from './firebase';
 import {
-  DIAS, EMAIL_DONO, EDITORES_FIXOS, PROXIMO_TURNO, MODELOS, MODELO_PADRAO, rotuloTurno, normalizarTurno, iso, segundaDe, somarDias,
+  DIAS, EMAIL_DONO, PROXIMO_TURNO, MODELOS, MODELO_PADRAO, rotuloTurno, normalizarTurno, iso, segundaDe, somarDias,
   FUNCIONARIOS, useSemana, useMes, useEditores,
   definirTurno, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
 } from './dados';
@@ -44,7 +44,7 @@ export default function Escala() {
 
   const email = (usuario?.email || '').toLowerCase();
   const dono = email === EMAIL_DONO;
-  const editor = dono || EDITORES_FIXOS.includes(email) || editores.includes(email);
+  const editor = dono || editores.includes(email);
   const hojeIso = iso(new Date());
   const dias = DIAS.map((nome, i) => ({ nome, i, data: somarDias(segunda, i) }));
   const turnoDe = (f, i) => normalizarTurno(turnos?.[f.id]?.[i]);
