@@ -29,7 +29,7 @@ export const FUNCIONARIOS = [
   { id: 'jeferson', nome: 'Jeferson', funcao: 'Cozinha' },
   { id: 'everton', nome: 'Everton', funcao: 'Cozinha' },
   { id: 'ramon', nome: 'Ramon', funcao: 'Cozinha' },
-  { id: 'any', nome: 'Any', funcao: 'Salão' },
+  { id: 'ana', nome: 'Ana', funcao: 'Salão' },
   { id: 'lucas', nome: 'Lucas', funcao: 'Salão' },
   { id: 'thiago', nome: 'Thiago', funcao: 'Salão' },
   { id: 'joao', nome: 'João', funcao: 'Salão' },
