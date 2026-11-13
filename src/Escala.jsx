@@ -39,7 +39,7 @@ export default function Escala() {
   const semanaDoc = useSemana(segundaIso);
   const turnos = semanaDoc && (semanaDoc.turnos || {});
   const modeloSemana = semanaDoc?.modelo || MODELO_PADRAO;
-  const [modelo, setModelo] = useState('auto');
+  const modelo = 'auto'; // sempre automático: ninguém escolhe modelo sem querer
 
   if (!configurado) return <p className="aviso">Firebase não configurado.</p>;
 
@@ -200,13 +200,7 @@ export default function Escala() {
       <div className="acoes">
         <button className="botao" onClick={copiar}>📋 Copiar para o WhatsApp</button>
         {editor && (
-          <span className="gerar">
-            <select value={modelo} onChange={(ev) => setModelo(ev.target.value)} aria-label="Modelo da escala">
-              <option value="auto">Automático</option>
-              {Object.keys(MODELOS).map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-            <button className="botao claro" onClick={gerar}>✨ Montar o mês</button>
-          </span>
+<button className="botao claro" onClick={gerar}>✨ Montar o mês</button>
         )}
         {editor && <button className="botao claro perigo" onClick={() => setDiaApagar(iso(new Date()))}>🗑 Apagar o dia</button>}
         {editor && <button className="botao claro perigo" onClick={apagarTodos}>🗑 Apagar tudo</button>}
