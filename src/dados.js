@@ -8,15 +8,26 @@ export const EMAIL_DONO = 'rcandrerc@gmail.com';
 export const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 // Valores gravados: '' (folga), 'M' (manhã), 'N' (noite), 'MN' (dia todo).
 export const PROXIMO_TURNO = { '': 'M', M: 'N', N: 'MN', MN: '' };
+// Freelancer não tem área fixa: o valor diz a área e o turno do dia (C/S + M/N).
+// Cada freelancer tem um setor (campo area); o toque alterna: livre → manhã → tarde.
+export const proximoFree = (f, v) => { const a = f.area[0]; return { '': a + 'M', [a + 'M']: a + 'N' }[v] ?? ''; };
+export const ehFree = (f) => f.funcao === 'Freelancer';
+// Área em que a pessoa conta naquele dia.
+export const areaDe = (f, v) => (ehFree(f) ? (v?.[0] === 'C' ? 'Cozinha' : v?.[0] === 'S' ? 'Salão' : '') : f.funcao);
 // Modelos de escala. M/N são os dois turnos; o rótulo muda conforme o modelo da semana.
 export const MODELOS = {
   '5x2': { nome: '5x2', M: 'Manhã 8h–17h24', N: 'Tarde 14h–23h24', curtoM: '8h–17h24', curtoN: '14h–23h24' },
   '12x36': { nome: '12x36', M: '8h–20h', N: '11h30–23h30', curtoM: '8h–20h', curtoN: '11h30–23h30' },
 };
 export const MODELO_PADRAO = '5x2';
-export const rotuloTurno = (modelo, t) => (t === 'MN' ? 'Dia todo' : (MODELOS[modelo] || MODELOS[MODELO_PADRAO])[t]);
+export const rotuloTurno = (modelo, t) => {
+  if (t === 'MN') return 'Dia todo';
+  const m = MODELOS[modelo] || MODELOS[MODELO_PADRAO];
+  if (t && t.length === 2) return `${t[0] === 'C' ? 'Cozinha' : 'Salão'} ${m[t[1]]}`;
+  return m[t];
+};
 // Valores antigos ('Trabalha', texto livre) contam como dia todo; 'Folga' como folga.
-export const normalizarTurno = (t) => (t === 'M' || t === 'N' || t === 'MN' ? t : t && !String(t).toLowerCase().startsWith('folga') ? 'MN' : '');
+export const normalizarTurno = (t) => (['M', 'N', 'MN', 'CM', 'CN', 'SM', 'SN'].includes(t) ? t : t && !String(t).toLowerCase().startsWith('folga') ? 'MN' : '');
 
 const pad = (n) => String(n).padStart(2, '0');
 export const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -45,6 +56,11 @@ export const FUNCIONARIOS = [
   { id: 'thiago', nome: 'Thiago', funcao: 'Salão', turno: 'N' },
   { id: 'lucas', nome: 'Lucas', funcao: 'Salão', turno: 'M' },
   { id: 'joao', nome: 'João', funcao: 'Salão', turno: 'N' },
+  // Freelancers: só entram quando vocês escalam na mão para tapar buraco.
+  { id: 'brian', nome: 'Brian', funcao: 'Freelancer', area: 'Cozinha' },
+  { id: 'ciele', nome: 'Ciele', funcao: 'Freelancer', area: 'Cozinha' },
+  { id: 'ariana', nome: 'Ariana', funcao: 'Freelancer', area: 'Cozinha' },
+  { id: 'thiago-ramon', nome: 'Thiago Ramon', funcao: 'Freelancer', area: 'Salão', curto: 'TRa' },
 ];
 
 // Turnos de uma semana: { [idFuncionario]: { [0..6]: texto } }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut } from 'firebase/auth';
 import { auth, configurado } from './firebase';
 import {
-  DIAS, EMAIL_DONO, PROXIMO_TURNO, MODELOS, MODELO_PADRAO, rotuloTurno, normalizarTurno, iso, segundaDe, somarDias,
+  DIAS, EMAIL_DONO, PROXIMO_TURNO, proximoFree, ehFree, areaDe, MODELOS, MODELO_PADRAO, rotuloTurno, normalizarTurno, iso, segundaDe, somarDias,
   FUNCIONARIOS, useSemana, useMes, useEditores,
   definirTurno, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
 } from './dados';
@@ -14,7 +14,7 @@ function buracos(turno) {
   if (!FUNCIONARIOS.some((f) => turno(f))) return [];
   const r = [];
   GRUPOS.forEach((g) => ['M', 'N'].forEach((t) => {
-    const tem = FUNCIONARIOS.filter((f) => f.funcao === g && turno(f).includes(t)).length;
+    const tem = FUNCIONARIOS.filter((f) => areaDe(f, turno(f)) === g && turno(f).includes(t)).length;
     if (tem < MINIMO) r.push({ g, t, falta: MINIMO - tem });
   }));
   return r;
@@ -29,6 +29,7 @@ export default function Escala() {
   const [segunda, setSegunda] = useState(() => segundaDe(new Date()));
   const [painel, setPainel] = useState(false);
   const [diaApagar, setDiaApagar] = useState(null);
+  const [chamar, setChamar] = useState(null); // { data, i, g, t }
   const [visao, setVisao] = useState('semana');
   const [mesRef, setMesRef] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1, 12));
 
@@ -62,7 +63,7 @@ export default function Escala() {
 
   async function alternar(f, i) {
     setAviso('');
-    try { await definirTurno(segundaIso, f.id, i, PROXIMO_TURNO[turnoDe(f, i)]); }
+    try { await definirTurno(segundaIso, f.id, i, ehFree(f) ? proximoFree(f, turnoDe(f, i)) : PROXIMO_TURNO[turnoDe(f, i)]); }
     catch { setAviso('Sem permissão para salvar. Confira se entrou com a conta certa.'); }
   }
 
@@ -169,9 +170,11 @@ export default function Escala() {
             <section key={nome} className={`dia ${iso(data) === hojeIso ? 'hoje' : ''} ${fechado(i) ? 'fechado' : ''}`}>
               <h2>{nome} <small>{fmt(data)}</small>{iso(data) === hojeIso && <em>hoje</em>}{editor && !fechado(i) && <button className="lixo" aria-label={`Apagar ${nome}`} onClick={() => apagarUmDia(data)}>🗑</button>}</h2>
               {!fechado(i) && buracos((f) => turnoDe(f, i)).map(({ g, t, falta }) => (
-                <p key={g + t} className="buraco">⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}. Chamar {falta > 1 ? `${falta} extras` : '1 extra'}.</p>
+                editor
+                  ? <button key={g + t} className="buraco" onClick={() => setChamar({ data, i, g, t })}>⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}. Toque para chamar freelancer.</button>
+                  : <p key={g + t} className="buraco">⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}.</p>
               ))}
-              {fechado(i) ? <p className="ninguem">Fechado</p> : GRUPOS.map((g) => (
+              {fechado(i) ? <p className="ninguem">Fechado</p> : [...GRUPOS, 'Freelancer'].map((g) => (g === 'Freelancer' && !editor && !FUNCIONARIOS.some((f) => ehFree(f) && turnoDe(f, i))) ? null : (
                 <div key={g} className="grupo">
                   <span className="rotulo">{g}</span>
                   <div className="chips">
@@ -210,6 +213,30 @@ export default function Escala() {
         {dono && <button className="botao claro" onClick={() => setPainel(true)}>🔑 Quem pode editar</button>}
       </div>
 
+      {chamar && (() => {
+        const livres = FUNCIONARIOS.filter((f) => ehFree(f) && f.area === chamar.g);
+        return (
+          <div className="fundo-janela" onClick={() => setChamar(null)}>
+            <div className="janela" role="dialog" aria-label="Chamar freelancer" onClick={(ev) => ev.stopPropagation()}>
+              <div className="janela-topo"><h2>Freelancer · {chamar.g}</h2><button className="link" onClick={() => setChamar(null)}>Fechar</button></div>
+              <p className="suave">{DIAS[chamar.i]} {fmt(chamar.data)} · {rotuloTurno(modeloSemana, chamar.t)}</p>
+              <div className="prontos">
+                {livres.map((f) => {
+                  const ocupado = turnoDe(f, chamar.i);
+                  return (
+                    <button key={f.id} disabled={!!ocupado} onClick={async () => {
+                      setChamar(null);
+                      try { await definirTurno(segundaIso, f.id, chamar.i, chamar.g[0] + chamar.t); }
+                      catch { setAviso('Sem permissão para salvar.'); }
+                    }}>{f.nome}{ocupado ? ' (já escalado)' : ''}</button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {diaApagar !== null && (
         <div className="fundo-janela" onClick={() => setDiaApagar(null)}>
           <div className="janela" role="dialog" aria-label="Apagar o dia" onClick={(ev) => ev.stopPropagation()}>
@@ -233,7 +260,7 @@ export default function Escala() {
   );
 }
 
-const Nome = ({ f }) => <span className="nm"><span className="longo">{f.nome}</span><span className="curto">{f.nome.slice(0, 3)}</span></span>;
+const Nome = ({ f }) => <span className="nm"><span className="longo">{f.nome}</span><span className="curto">{f.curto || f.nome.slice(0, 3)}</span>{ehFree(f) && <sup>F</sup>}</span>;
 
 // Calendário do mês: por dia, quantos vão de manhã e à noite e quem está de folga.
 function Mes({ ref0, hojeIso, abrir }) {
@@ -267,7 +294,7 @@ function Mes({ ref0, hojeIso, abrir }) {
         const quem = (x) => FUNCIONARIOS.filter((f) => turno(f).includes(x));
         const m = quem('M');
         const n = quem('N');
-        const folgas = FUNCIONARIOS.filter((f) => !turno(f));
+        const folgas = FUNCIONARIOS.filter((f) => !ehFree(f) && !turno(f));
         const fechada = FECHA_NA_SEGUNDA && i === 0;
         const vazio = m.length + n.length === 0;
         const falta = fechada || fora ? [] : buracos(turno);

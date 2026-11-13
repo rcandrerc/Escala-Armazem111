@@ -1,4 +1,4 @@
-import { FUNCIONARIOS, iso, segundaDe, somarDias } from './dados';
+import { FUNCIONARIOS, ehFree, areaDe, iso, segundaDe, somarDias } from './dados';
 
 // Geração automática do mês. Segunda o restaurante fecha. Cada um fica no seu
 // turno fixo (campo turno em FUNCIONARIOS: M ou N), e o modelo decide as folgas:
@@ -13,7 +13,7 @@ const DIA_MS = 24 * 3600 * 1000;
 const BASE = new Date(2024, 0, 1, 12); // uma segunda-feira
 
 export function gerarMes(ano, mes, modelo) {
-  const grupos = [...new Set(FUNCIONARIOS.map((f) => f.funcao))];
+  const grupos = [...new Set(FUNCIONARIOS.filter((f) => !ehFree(f)).map((f) => f.funcao))];
   const resultado = {};
   for (let d = new Date(ano, mes, 1, 12); d.getMonth() === mes; d = somarDias(d, 1)) {
     const seg = segundaDe(d);
@@ -37,6 +37,8 @@ export function gerarMes(ano, mes, modelo) {
         (semana[f.id] ||= {})[i] = trabalha ? f.turno : '';
       });
     });
+    // Freelancers saem do mês montado; vocês colocam na mão onde precisar.
+    FUNCIONARIOS.filter(ehFree).forEach((f) => { (semana[f.id] ||= {})[i] = ''; });
   }
   return resultado;
 }
@@ -46,9 +48,9 @@ export function contarBuracos(resultado, minimo = 2) {
   let x = 0;
   Object.values(resultado).forEach((t) => {
     for (let i = 0; i < 7; i++) {
-      if (!FUNCIONARIOS.some((f) => t[f.id]?.[i] !== undefined) || (FECHA_NA_SEGUNDA && i === 0)) continue;
-      [...new Set(FUNCIONARIOS.map((f) => f.funcao))].forEach((g) => ['M', 'N'].forEach((s) => {
-        const tem = FUNCIONARIOS.filter((f) => f.funcao === g && (t[f.id]?.[i] || '').includes(s)).length;
+      if (!FUNCIONARIOS.some((f) => t[f.id]?.[i]) || (FECHA_NA_SEGUNDA && i === 0)) continue;
+      ['Cozinha', 'Salão'].forEach((g) => ['M', 'N'].forEach((s) => {
+        const tem = FUNCIONARIOS.filter((f) => areaDe(f, t[f.id]?.[i]) === g && (t[f.id]?.[i] || '').includes(s)).length;
         x += Math.max(0, minimo - tem);
       }));
     }

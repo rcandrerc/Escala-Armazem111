@@ -118,3 +118,12 @@ span.chip { min-height:0; padding:7px 14px; display:inline-block; }
 @media (max-width:640px) { .mes-m i, .mes-n i { font-size:8.5px; padding:1px 2px; letter-spacing:-.02em; } }
 
 .buraco.resumo { margin:0 8px 8px; }
+
+.chip.t-CM, .chip.t-SM { background:#f0b429; border-color:#c0392b; color:#3d2700; border-style:dashed; }
+.chip.t-CN, .chip.t-SN { background:#2d3a6b; border-color:#f0b429; color:#fff; border-style:dashed; }
+.nm sup { font-size:.7em; color:#c0392b; font-weight:800; margin-left:1px; }
+
+button.buraco { display:block; width:100%; text-align:left; border:0; font:inherit; font-weight:700; font-size:14px; cursor:pointer; }
+.prontos { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.prontos button { padding:14px 8px; border-radius:12px; border:1px solid var(--linha); background:var(--sup); color:var(--texto); font-weight:700; }
+.prontos button:disabled { opacity:.5; }
