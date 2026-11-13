@@ -53,3 +53,18 @@ td:not(:has(button)) { padding:10px 6px; }
 .lista li { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .lista li input { flex:1 1 120px; }
 .lista li span { flex:1; overflow-wrap:anywhere; }
+
+.dica { margin:4px 16px 0; color:var(--suave); font-size:14px; }
+.dias { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px; padding:0 12px; }
+.dia { background:var(--sup); border:1px solid var(--linha); border-radius:18px; padding:14px; }
+.dia.hoje { border:2px solid var(--vinho); }
+.dia h2 { margin:0 0 8px; font:700 20px/1.1 Georgia,serif; display:flex; align-items:baseline; gap:8px; }
+.dia h2 small { font:400 14px system-ui; color:var(--suave); }
+.dia h2 em { margin-left:auto; font:700 12px system-ui; background:var(--vinho); color:#fff; border-radius:99px; padding:3px 10px; font-style:normal; }
+.grupo { margin-top:10px; }
+.rotulo { display:block; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--suave); margin-bottom:6px; }
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
+.chip { border:2px solid var(--linha); background:var(--sup); color:var(--suave); border-radius:99px; padding:9px 16px; font-weight:700; min-height:44px; }
+.chip.on { background:var(--vinho); border-color:var(--vinho); color:#fff; }
+span.chip { min-height:0; padding:7px 14px; display:inline-block; }
+.ninguem { color:var(--suave); }
