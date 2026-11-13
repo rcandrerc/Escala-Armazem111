@@ -8,7 +8,13 @@ export const EMAIL_DONO = 'rcandrerc@gmail.com';
 export const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 // Valores gravados: '' (folga), 'M' (manhã), 'N' (noite), 'MN' (dia todo).
 export const PROXIMO_TURNO = { '': 'M', M: 'N', N: 'MN', MN: '' };
-export const ROTULO_TURNO = { M: 'Manhã', N: 'Noite', MN: 'Dia todo' };
+// Modelos de escala. M/N são os dois turnos; o rótulo muda conforme o modelo da semana.
+export const MODELOS = {
+  '5x2': { nome: '5x2', M: 'Manhã 8h–17h24', N: 'Tarde 14h–23h24' },
+  '12x36': { nome: '12x36', M: '8h–20h', N: '11h30–23h30' },
+};
+export const MODELO_PADRAO = '5x2';
+export const rotuloTurno = (modelo, t) => (t === 'MN' ? 'Dia todo' : (MODELOS[modelo] || MODELOS[MODELO_PADRAO])[t]);
 // Valores antigos ('Trabalha', texto livre) contam como dia todo; 'Folga' como folga.
 export const normalizarTurno = (t) => (t === 'M' || t === 'N' || t === 'MN' ? t : t && !String(t).toLowerCase().startsWith('folga') ? 'MN' : '');
 
@@ -43,12 +49,12 @@ export const FUNCIONARIOS = [
 
 // Turnos de uma semana: { [idFuncionario]: { [0..6]: texto } }
 export function useSemana(segundaIso) {
-  const [turnos, setTurnos] = useState(null);
+  const [semana, setSemana] = useState(null);
   useEffect(() => {
-    setTurnos(null);
-    return onSnapshot(doc(db, 'escala_semanas', segundaIso), (s) => setTurnos(s.exists() ? s.data().turnos || {} : {}), () => setTurnos({}));
+    setSemana(null);
+    return onSnapshot(doc(db, 'escala_semanas', segundaIso), (s) => setSemana(s.exists() ? s.data() : {}), () => setSemana({}));
   }, [segundaIso]);
-  return turnos;
+  return semana; // { turnos, modelo }
 }
 
 // Todas as semanas que tocam o mês: { [segundaIso]: turnos }. null enquanto carrega.
@@ -76,8 +82,8 @@ export function useEditores() {
   return emails;
 }
 
-export const salvarSemanas = (semanas) =>
-  Promise.all(Object.entries(semanas).map(([seg, turnos]) => setDoc(doc(db, 'escala_semanas', seg), { turnos }, { merge: true })));
+export const salvarSemanas = (semanas, modelo) =>
+  Promise.all(Object.entries(semanas).map(([seg, turnos]) => setDoc(doc(db, 'escala_semanas', seg), modelo ? { turnos, modelo } : { turnos }, { merge: true })));
 
 export const definirTurno = (segundaIso, funcId, dia, texto) =>
   setDoc(doc(db, 'escala_semanas', segundaIso), { turnos: { [funcId]: { [dia]: texto } } }, { merge: true });

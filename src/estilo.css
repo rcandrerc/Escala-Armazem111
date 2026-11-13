@@ -103,3 +103,10 @@ span.chip { min-height:0; padding:7px 14px; display:inline-block; }
 
 .lixo { margin-left:auto; background:none; border:0; font-size:18px; padding:2px 6px; opacity:.7; }
 .dia h2 em + .lixo { margin-left:8px; }
+
+.gerar { display:inline-flex; gap:6px; align-items:center; }
+.gerar select { font:inherit; font-weight:700; padding:10px; border-radius:12px; border:1px solid var(--linha); background:var(--sup); color:var(--texto); }
+
+.buraco { margin:6px 0 0; padding:8px 10px; border-radius:10px; background:#fde2df; color:#8a1c12; font-weight:700; font-size:14px; }
+.mes-dia.falta { border:2px solid #c0392b; }
+@media (prefers-color-scheme: dark) { .buraco { background:#4a1d18; color:#ffb4a8; } }
