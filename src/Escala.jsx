@@ -132,7 +132,7 @@ export default function Escala() {
 
       {usuario && !editor && <p className="aviso">A conta {usuario.email} não tem permissão para editar. Você pode só ver a escala.</p>}
       {aviso && <p className="aviso" role="status">{aviso}</p>}
-      {editor && <p className="dica">Toque no nome para mudar: folga → 1º turno → 2º turno → dia todo.</p>}
+      {editor && <p className="dica">Toque no nome para mudar: folga → manhã → tarde.</p>}
 
       <div className="abas">
         <button className={visao === 'semana' ? 'on' : ''} onClick={() => setVisao('semana')}>Semana</button>
@@ -173,6 +173,9 @@ export default function Escala() {
                 editor
                   ? <button key={g + t} className="buraco" onClick={() => setChamar({ data, i, g, t })}>⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}. Toque para chamar freelancer.</button>
                   : <p key={g + t} className="buraco">⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}.</p>
+              ))}
+              {!fechado(i) && FUNCIONARIOS.filter((f) => turnoDe(f, i) === 'MN').map((f) => (
+                <p key={'dobra' + f.id} className="buraco">⛔ {f.nome} está nos dois turnos. Toque no nome dele para corrigir.</p>
               ))}
               {fechado(i) ? <p className="ninguem">Fechado</p> : [...GRUPOS, 'Freelancer'].map((g) => (g === 'Freelancer' && !editor && !FUNCIONARIOS.some((f) => ehFree(f) && turnoDe(f, i))) ? null : (
                 <div key={g} className="grupo">
@@ -292,10 +295,11 @@ function Mes({ ref0, hojeIso, abrir }) {
         const fechada = FECHA_NA_SEGUNDA && i === 0;
         const vazio = m.length + n.length === 0;
         const falta = fechada || fora ? [] : buracos(turno);
+        const dobra = !fechada && !fora && FUNCIONARIOS.some((f) => turno(f) === 'MN');
         return (
           <button key={iso(data)} disabled={fora} onClick={() => abrir(data)}
-            className={`mes-dia ${falta.length ? 'falta' : ''} ${fora ? 'fora' : ''} ${iso(data) === hojeIso ? 'hoje' : ''} ${fechada ? 'fechado' : ''}`}>
-            <b>{data.getDate()}{falta.length > 0 && <span className="mes-alerta" title="Falta gente: chamar extra"> ⚠️{falta.reduce((s, x) => s + x.falta, 0)}</span>}</b>
+            className={`mes-dia ${falta.length || dobra ? 'falta' : ''} ${fora ? 'fora' : ''} ${iso(data) === hojeIso ? 'hoje' : ''} ${fechada ? 'fechado' : ''}`}>
+            <b>{data.getDate()}{dobra && <span title="Alguém em dois turnos"> ⛔</span>}{falta.length > 0 && <span className="mes-alerta" title="Falta gente: chamar extra"> ⚠️{falta.reduce((s, x) => s + x.falta, 0)}</span>}</b>
             {!fora && (fechada ? <span className="mes-fecha">Fechado</span> : vazio ? <span className="mes-vazio">—</span> : (
               <>
                 <span className="mes-m"><i>{md.curtoM}</i>{m.map((f) => <Nome key={f.id} f={f} />)}</span>

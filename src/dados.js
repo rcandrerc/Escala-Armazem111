@@ -7,7 +7,8 @@ export const EMAIL_DONO = 'rcandrerc@gmail.com';
 
 export const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 // Valores gravados: '' (folga), 'M' (manhã), 'N' (noite), 'MN' (dia todo).
-export const PROXIMO_TURNO = { '': 'M', M: 'N', N: 'MN', MN: '' };
+// Ninguém faz dois turnos no mesmo dia: o toque só alterna folga → manhã → tarde.
+export const PROXIMO_TURNO = { '': 'M', M: 'N', N: '', MN: '' };
 // Freelancer não tem área fixa: o valor diz a área e o turno do dia (C/S + M/N).
 // Cada freelancer tem um setor (campo area); o toque alterna: livre → manhã → tarde.
 export const proximoFree = (f, v) => { const a = f.area[0]; return { '': a + 'M', [a + 'M']: a + 'N' }[v] ?? ''; };
