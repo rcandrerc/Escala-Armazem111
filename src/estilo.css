@@ -68,3 +68,7 @@ td:not(:has(button)) { padding:10px 6px; }
 .chip.on { background:var(--vinho); border-color:var(--vinho); color:#fff; }
 span.chip { min-height:0; padding:7px 14px; display:inline-block; }
 .ninguem { color:var(--suave); }
+.chip.t-M { background:#f0b429; border-color:#f0b429; color:#3d2700; }
+.chip.t-N { background:#2d3a6b; border-color:#2d3a6b; color:#fff; }
+.chip.t-MN { background:var(--vinho); border-color:var(--vinho); color:#fff; }
+.dia.fechado { opacity:.6; }

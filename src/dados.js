@@ -6,7 +6,11 @@ import { db } from './firebase';
 export const EMAIL_DONO = 'rcandrerc@gmail.com';
 
 export const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-export const TURNOS_PRONTOS = ['Folga', 'Almoço 11h–16h', 'Jantar 18h–23h', 'Integral 11h–23h'];
+// Valores gravados: '' (folga), 'M' (manhã), 'N' (noite), 'MN' (dia todo).
+export const PROXIMO_TURNO = { '': 'M', M: 'N', N: 'MN', MN: '' };
+export const ROTULO_TURNO = { M: 'Manhã', N: 'Noite', MN: 'Dia todo' };
+// Valores antigos ('Trabalha', texto livre) contam como dia todo; 'Folga' como folga.
+export const normalizarTurno = (t) => (t === 'M' || t === 'N' || t === 'MN' ? t : t && !String(t).toLowerCase().startsWith('folga') ? 'MN' : '');
 
 const pad = (n) => String(n).padStart(2, '0');
 export const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -50,6 +54,9 @@ export function useEditores() {
   useEffect(() => onSnapshot(doc(db, 'escala_config', 'editores'), (s) => setEmails(s.exists() ? s.data().emails || [] : []), () => {}), []);
   return emails;
 }
+
+export const salvarSemanas = (semanas) =>
+  Promise.all(Object.entries(semanas).map(([seg, turnos]) => setDoc(doc(db, 'escala_semanas', seg), { turnos }, { merge: true })));
 
 export const definirTurno = (segundaIso, funcId, dia, texto) =>
   setDoc(doc(db, 'escala_semanas', segundaIso), { turnos: { [funcId]: { [dia]: texto } } }, { merge: true });
