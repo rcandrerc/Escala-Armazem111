@@ -6,7 +6,7 @@ import { FECHA_NA_SEGUNDA } from './gerar';
 const HORAS = Array.from({ length: 16 }, (_, k) => 480 + k * 60); // 08:00 … 23:00
 const fmt = (d) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-export default function Horarios({ segunda, segundaIso, semanaDoc, editor, hojeIso, avisar }) {
+export default function Horarios({ segunda, segundaIso, semanaDoc, editor, hojeIso, avisar, alertaDia, abrirDia }) {
   const [setor, setSetor] = useState('Cozinha');
   const [cel, setCel] = useState(null); // { i, hs }
   const turnos = semanaDoc?.turnos || {};
@@ -42,7 +42,7 @@ export default function Horarios({ segunda, segundaIso, semanaDoc, editor, hojeI
       <div className="abas setores">
         {['Cozinha', 'Salão'].map((s) => <button key={s} className={setor === s ? 'on' : ''} onClick={() => setSetor(s)}>{s === 'Cozinha' ? '🍳' : '🍽'} {s}</button>)}
       </div>
-      <p className="dica">Número = quantas pessoas estão juntas naquela hora. {editor ? 'Toque numa hora para marcar o almoço de alguém (1h).' : ''}</p>
+      <p className="dica">Segunda fechado. Número = quantas pessoas estão juntas naquela hora. Toque no dia para ver a equipe{editor ? ' e mudar turnos; toque numa hora para marcar almoço (1h)' : ''}.</p>
       <p className="legenda"><span className="lot l1">1</span> falta <span className="lot l2">2</span> ok <span className="lot l3">3</span> cheio <span className="lot l4">4+</span> lotado</p>
       <div className="rolagem grade">
         <table>
@@ -50,11 +50,16 @@ export default function Horarios({ segunda, segundaIso, semanaDoc, editor, hojeI
             <tr>
               <th className="hora" />
               {DIAS.map((d, i) => {
+                if (fechado(i)) return null;
                 const data = somarDias(segunda, i);
                 return (
                   <th key={d} className={iso(data) === hojeIso ? 'hoje' : ''}>
-                    {fmt(data)}<small>{d}</small>
-                    {!fechado(i) && folgas(i).length > 0 && <span className="g-folga">Folga {folgas(i).map(curto).join(', ')}</span>}
+                    <button className="g-dia" disabled={fechado(i)} onClick={() => abrirDia(i)}>
+                      {fmt(data)}<small>{d}</small>
+                      {!fechado(i) && alertaDia(i) > 0 && <span className="g-alerta">⚠️ falta {alertaDia(i)}</span>}
+                      {!fechado(i) && folgas(i).length > 0 && <span className="g-folga">Folga {folgas(i).map(curto).join(', ')}</span>}
+                      {!fechado(i) && <span className="g-ver">{editor ? '✏️ editar' : 'ver dia'}</span>}
+                    </button>
                   </th>
                 );
               })}
@@ -65,7 +70,7 @@ export default function Horarios({ segunda, segundaIso, semanaDoc, editor, hojeI
               <tr key={hs}>
                 <th className="hora">{hhmm(hs)}</th>
                 {DIAS.map((d, i) => {
-                  if (fechado(i)) return <td key={d} className="g-fechado">{hs === 480 ? 'Fechado' : ''}</td>;
+                  if (fechado(i)) return null;
                   const ps = pessoas(i);
                   if (!ps.length) return <td key={d} />;
                   const { max, min } = lotacao(ps, hs);

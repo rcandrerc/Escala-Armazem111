@@ -30,6 +30,7 @@ export default function Escala() {
   const [segunda, setSegunda] = useState(() => segundaDe(new Date()));
   const [painel, setPainel] = useState(false);
   const [diaApagar, setDiaApagar] = useState(null);
+  const [diaAberto, setDiaAberto] = useState(null);
   const [chamar, setChamar] = useState(null); // { data, i, g, t }
   const [visao, setVisao] = useState('semana');
   const [mesRef, setMesRef] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1, 12));
@@ -133,12 +134,10 @@ export default function Escala() {
 
       {usuario && !editor && <p className="aviso">A conta {usuario.email} não tem permissão para editar. Você pode só ver a escala.</p>}
       {aviso && <p className="aviso" role="status">{aviso}</p>}
-      {editor && <p className="dica">Toque no nome para mudar: folga → manhã → tarde.</p>}
 
       <div className="abas">
         <button className={visao === 'semana' ? 'on' : ''} onClick={() => setVisao('semana')}>Semana</button>
         <button className={visao === 'mes' ? 'on' : ''} onClick={() => { setMesRef(new Date(segunda.getFullYear(), segunda.getMonth(), 1, 12)); setVisao('mes'); }}>📅 Mês</button>
-        <button className={visao === 'horas' ? 'on' : ''} onClick={() => setVisao('horas')}>⏰ Horários</button>
       </div>
 
       {visao === 'mes' ? (
@@ -166,40 +165,10 @@ export default function Escala() {
 
       {turnos === null ? (
         <p className="aviso">Carregando…</p>
-      ) : visao === 'horas' ? (
-        <Horarios segunda={segunda} segundaIso={segundaIso} semanaDoc={semanaDoc} editor={editor} hojeIso={hojeIso} avisar={setAviso} />
       ) : (
-        <div className="dias">
-          {dias.map(({ nome, i, data }) => (
-            <section key={nome} className={`dia ${iso(data) === hojeIso ? 'hoje' : ''} ${fechado(i) ? 'fechado' : ''}`}>
-              <h2>{nome} <small>{fmt(data)}</small>{iso(data) === hojeIso && <em>hoje</em>}{editor && !fechado(i) && <button className="lixo" aria-label={`Apagar ${nome}`} onClick={() => apagarUmDia(data)}>🗑</button>}</h2>
-              {!fechado(i) && buracos((f) => turnoDe(f, i)).map(({ g, t, falta }) => (
-                editor
-                  ? <button key={g + t} className="buraco" onClick={() => setChamar({ data, i, g, t })}>⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}. Toque para chamar freelancer.</button>
-                  : <p key={g + t} className="buraco">⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}.</p>
-              ))}
-              {!fechado(i) && FUNCIONARIOS.filter((f) => turnoDe(f, i) === 'MN').map((f) => (
-                <p key={'dobra' + f.id} className="buraco">⛔ {f.nome} está nos dois turnos. Toque no nome dele para corrigir.</p>
-              ))}
-              {fechado(i) ? <p className="ninguem">Fechado</p> : [...GRUPOS, 'Freelancer'].map((g) => (g === 'Freelancer' && !editor && !FUNCIONARIOS.some((f) => ehFree(f) && turnoDe(f, i))) ? null : (
-                <div key={g} className="grupo">
-                  <span className="rotulo">{g}</span>
-                  <div className="chips">
-                    {FUNCIONARIOS.filter((f) => f.funcao === g).map((f) => {
-                      const t = turnoDe(f, i);
-                      const rot = t ? `${f.nome} · ${rotuloTurno(modeloSemana, t)}` : f.nome;
-                      if (!editor && !t) return null;
-                      return editor
-                        ? <button key={f.id} className={`chip ${t ? 't-' + t : ''}`} onClick={() => alternar(f, i)}>{rot}</button>
-                        : <span key={f.id} className={`chip t-${t}`}>{rot}</span>;
-                    })}
-                    {!editor && !FUNCIONARIOS.some((f) => f.funcao === g && turnoDe(f, i)) && <span className="ninguem">—</span>}
-                  </div>
-                </div>
-              ))}
-            </section>
-          ))}
-        </div>
+        <Horarios segunda={segunda} segundaIso={segundaIso} semanaDoc={semanaDoc} editor={editor} hojeIso={hojeIso} avisar={setAviso}
+          alertaDia={(i) => (fechado(i) ? 0 : buracos((f) => turnoDe(f, i)).reduce((s, x) => s + x.falta, 0))}
+          abrirDia={(i) => setDiaAberto(i)} />
       )}
       </>
       )}
@@ -213,6 +182,44 @@ export default function Escala() {
         {editor && <button className="botao claro perigo" onClick={apagarTodos}>🗑 Apagar tudo</button>}
         {dono && <button className="botao claro" onClick={() => setPainel(true)}>🔑 Quem pode editar</button>}
       </div>
+
+      {diaAberto !== null && turnos && (() => {
+        const { nome, i, data } = dias[diaAberto];
+        return (
+          <div className="fundo-janela" onClick={() => setDiaAberto(null)}>
+            <div className="janela" role="dialog" aria-label={nome} onClick={(ev) => ev.stopPropagation()}>
+              <div className="janela-topo"><span /><button className="link" onClick={() => setDiaAberto(null)}>Fechar</button></div>
+            <section className={`dia ${iso(data) === hojeIso ? 'hoje' : ''} ${fechado(i) ? 'fechado' : ''}`}>
+                <h2>{nome} <small>{fmt(data)}</small>{iso(data) === hojeIso && <em>hoje</em>}{editor && !fechado(i) && <button className="lixo" aria-label={`Apagar ${nome}`} onClick={() => apagarUmDia(data)}>🗑</button>}</h2>
+                {!fechado(i) && buracos((f) => turnoDe(f, i)).map(({ g, t, falta }) => (
+                  editor
+                    ? <button key={g + t} className="buraco" onClick={() => setChamar({ data, i, g, t })}>⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}. Toque para chamar freelancer.</button>
+                    : <p key={g + t} className="buraco">⚠️ {g} {rotuloTurno(modeloSemana, t)}: falta {falta}.</p>
+                ))}
+                {!fechado(i) && FUNCIONARIOS.filter((f) => turnoDe(f, i) === 'MN').map((f) => (
+                  <p key={'dobra' + f.id} className="buraco">⛔ {f.nome} está nos dois turnos. Toque no nome dele para corrigir.</p>
+                ))}
+                {fechado(i) ? <p className="ninguem">Fechado</p> : [...GRUPOS, 'Freelancer'].map((g) => (g === 'Freelancer' && !editor && !FUNCIONARIOS.some((f) => ehFree(f) && turnoDe(f, i))) ? null : (
+                  <div key={g} className="grupo">
+                    <span className="rotulo">{g}</span>
+                    <div className="chips">
+                      {FUNCIONARIOS.filter((f) => f.funcao === g).map((f) => {
+                        const t = turnoDe(f, i);
+                        const rot = t ? `${f.nome} · ${rotuloTurno(modeloSemana, t)}` : f.nome;
+                        if (!editor && !t) return null;
+                        return editor
+                          ? <button key={f.id} className={`chip ${t ? 't-' + t : ''}`} onClick={() => alternar(f, i)}>{rot}</button>
+                          : <span key={f.id} className={`chip t-${t}`}>{rot}</span>;
+                      })}
+                      {!editor && !FUNCIONARIOS.some((f) => f.funcao === g && turnoDe(f, i)) && <span className="ninguem">—</span>}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            </div>
+          </div>
+        );
+      })()}
 
       {chamar && (() => {
         const livres = FUNCIONARIOS.filter((f) => ehFree(f) && f.area === chamar.g);
