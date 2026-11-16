@@ -127,3 +127,23 @@ button.buraco { display:block; width:100%; text-align:left; border:0; font:inher
 .prontos { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .prontos button { padding:14px 8px; border-radius:12px; border:1px solid var(--linha); background:var(--sup); color:var(--texto); font-weight:700; }
 .prontos button:disabled { opacity:.5; }
+
+.legenda { margin:6px 16px; font-size:13px; color:var(--suave); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.grade table { min-width:820px; border-collapse:collapse; }
+.grade th, .grade td { border:1px solid var(--linha); vertical-align:top; font-size:11px; padding:2px; }
+.grade th.hora { position:sticky; left:0; background:var(--sup); font-weight:800; width:46px; z-index:1; text-align:right; padding-right:4px; }
+.grade thead th { font-weight:800; font-size:12px; }
+.grade thead th small { display:block; font-weight:600; color:var(--suave); }
+.g-folga { display:block; margin-top:3px; background:#c0392b; color:#fff; border-radius:5px; padding:2px 3px; font-size:10px; font-weight:700; }
+.grade td button { width:100%; min-height:34px; background:none; border:0; padding:0; text-align:left; color:inherit; font:inherit; display:flex; flex-direction:column; gap:1px; align-items:flex-start; }
+.grade td.g-fechado { background:var(--fundo); color:var(--suave); text-align:center; }
+.grade td.n1 { background:#fde2df; } .grade td.n3 { background:#fff4d6; } .grade td.n4 { background:#ffd9c2; }
+.lot { display:inline-block; min-width:20px; text-align:center; border-radius:99px; font-weight:800; font-size:11px; padding:0 5px; color:#fff; }
+.lot.l1 { background:#c0392b; } .lot.l2 { background:#2e9e6a; } .lot.l3 { background:#d68a00; } .lot.l4 { background:#d4500f; }
+.ev { display:block; line-height:1.2; font-weight:700; }
+.ev.entra { color:#1f7a4f; } .ev.sai { color:#8a3b12; } .ev.almoco { color:#3a4a99; }
+@media (prefers-color-scheme: dark) {
+  .grade td.n1 { background:#4a1d18; } .grade td.n3 { background:#3d3315; } .grade td.n4 { background:#4a2a14; }
+  .ev.entra { color:#6fe0a8; } .ev.sai { color:#ffb08a; } .ev.almoco { color:#9db0ff; }
+}
+.prontos button.on { outline:3px solid var(--vinho); }

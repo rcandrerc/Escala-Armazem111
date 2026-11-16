@@ -17,8 +17,8 @@ export const ehFree = (f) => f.funcao === 'Freelancer';
 export const areaDe = (f, v) => (ehFree(f) ? (v?.[0] === 'C' ? 'Cozinha' : v?.[0] === 'S' ? 'Salão' : '') : f.funcao);
 // Modelos de escala. M/N são os dois turnos; o rótulo muda conforme o modelo da semana.
 export const MODELOS = {
-  '5x2': { nome: '5x2', M: 'Manhã 8h–17h24', N: 'Tarde 14h–23h24', curtoM: '8h–17h24', curtoN: '14h–23h24' },
-  '12x36': { nome: '12x36', M: '8h–20h', N: '11h30–23h30', curtoM: '8h–20h', curtoN: '11h30–23h30' },
+  '5x2': { nome: '5x2', M: 'Manhã 8h–17h24', N: 'Tarde 14h–23h24', curtoM: '8h–17h24', curtoN: '14h–23h24', horas: { M: [480, 1044], N: [840, 1404] } },
+  '12x36': { nome: '12x36', M: '8h–20h', N: '11h30–23h30', curtoM: '8h–20h', curtoN: '11h30–23h30', horas: { M: [480, 1200], N: [690, 1410] } },
 };
 export const MODELO_PADRAO = '5x2';
 export const rotuloTurno = (modelo, t) => {
@@ -57,8 +57,9 @@ export const FUNCIONARIOS = [
   { id: 'thiago', nome: 'Thiago', funcao: 'Salão', turno: 'N' },
   { id: 'lucas', nome: 'Lucas', funcao: 'Salão', turno: 'M' },
   { id: 'joao', nome: 'João', funcao: 'Salão', turno: 'N' },
-  // Freelancers: só entram quando vocês escalam na mão para tapar buraco.
-  { id: 'brian', nome: 'Brian', funcao: 'Freelancer', area: 'Cozinha' },
+  // Freelancers: entram na mão para tapar buraco. Quem tem "fixo" o automático já escala
+  // (dias: 1 = terça … 6 = domingo). "horas" muda o horário dele (minutos desde 0h).
+  { id: 'brian', nome: 'Brian', funcao: 'Freelancer', area: 'Cozinha', fixo: { turno: 'CM', dias: [1, 2, 3, 4, 5, 6] }, horas: { M: [480, 900] } },
   { id: 'ciele', nome: 'Ciele', funcao: 'Freelancer', area: 'Cozinha' },
   { id: 'ariana', nome: 'Ariana', funcao: 'Freelancer', area: 'Cozinha' },
   { id: 'thiago-ramon', nome: 'Thiago Ramon', funcao: 'Freelancer', area: 'Salão', curto: 'TRa' },
@@ -120,3 +121,17 @@ export function apagarDia(data) {
   FUNCIONARIOS.forEach((f) => { turnos[f.id] = { [(data.getDay() + 6) % 7]: '' }; });
   return setDoc(doc(db, 'escala_semanas', iso(segundaDe(data))), { turnos }, { merge: true });
 }
+
+// Horário [início, fim] em minutos de quem está com o valor v no dia.
+export function horarioDe(f, v, modelo) {
+  if (!v) return null;
+  const m = (MODELOS[modelo] || MODELOS[MODELO_PADRAO]).horas;
+  const s = v.length === 2 && v !== 'MN' ? v[1] : v;
+  if (s === 'MN') return [m.M[0], m.N[1]];
+  return (f.horas && f.horas[s]) || m[s];
+}
+export const hhmm = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+
+// Almoço: minuto de início (1h de duração) ou null.
+export const definirAlmoco = (segundaIso, funcId, dia, inicio) =>
+  setDoc(doc(db, 'escala_semanas', segundaIso), { almoco: { [funcId]: { [dia]: inicio } } }, { merge: true });

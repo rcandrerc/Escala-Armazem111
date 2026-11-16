@@ -6,6 +6,7 @@ import {
   FUNCIONARIOS, useSemana, useMes, useEditores,
   definirTurno, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
 } from './dados';
+import Horarios from './Horarios';
 import { gerarMes, melhorModelo, contarBuracos, FECHA_NA_SEGUNDA } from './gerar';
 
 // Mínimo de pessoas por turno em cada área. Quando falta, o app avisa para chamar extra.
@@ -137,6 +138,7 @@ export default function Escala() {
       <div className="abas">
         <button className={visao === 'semana' ? 'on' : ''} onClick={() => setVisao('semana')}>Semana</button>
         <button className={visao === 'mes' ? 'on' : ''} onClick={() => { setMesRef(new Date(segunda.getFullYear(), segunda.getMonth(), 1, 12)); setVisao('mes'); }}>📅 Mês</button>
+        <button className={visao === 'horas' ? 'on' : ''} onClick={() => setVisao('horas')}>⏰ Horários</button>
       </div>
 
       {visao === 'mes' ? (
@@ -164,6 +166,8 @@ export default function Escala() {
 
       {turnos === null ? (
         <p className="aviso">Carregando…</p>
+      ) : visao === 'horas' ? (
+        <Horarios segunda={segunda} segundaIso={segundaIso} semanaDoc={semanaDoc} editor={editor} hojeIso={hojeIso} avisar={setAviso} />
       ) : (
         <div className="dias">
           {dias.map(({ nome, i, data }) => (

@@ -37,8 +37,11 @@ export function gerarMes(ano, mes, modelo) {
         (semana[f.id] ||= {})[i] = trabalha ? f.turno : '';
       });
     });
-    // Freelancers saem do mês montado; vocês colocam na mão onde precisar.
-    FUNCIONARIOS.filter(ehFree).forEach((f) => { (semana[f.id] ||= {})[i] = ''; });
+    // Freelancers: só os fixos entram no automático; os outros vocês chamam na mão.
+    FUNCIONARIOS.filter(ehFree).forEach((f) => {
+      const fixo = f.fixo && f.fixo.dias.includes(i) && !(FECHA_NA_SEGUNDA && i === 0);
+      (semana[f.id] ||= {})[i] = fixo ? f.fixo.turno : '';
+    });
   }
   return resultado;
 }
