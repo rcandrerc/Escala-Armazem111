@@ -4,7 +4,7 @@ import { auth, configurado } from './firebase';
 import {
   DIAS, EMAIL_DONO, PROXIMO_TURNO, proximoFree, ehFree, areaDe, MODELOS, MODELO_PADRAO, rotuloTurno, normalizarTurno, iso, segundaDe, somarDias,
   FUNCIONARIOS, useSemana, useMes, useEditores,
-  definirTurno, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
+  definirTurno, definirAlmoco, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
 } from './dados';
 import Horarios from './Horarios';
 import { gerarMes, melhorModelo, contarBuracos, FECHA_NA_SEGUNDA } from './gerar';
@@ -83,6 +83,30 @@ export default function Escala() {
     try {
       await salvarSemanas(esc.resultado, esc.modelo);
       setAviso(`Escala ${esc.modelo} de ${nomeMes(ref)} montada. ${esc.buracos ? `Faltam ${esc.buracos} turnos para ter 2 em cada setor: veja os ⚠️.` : 'Sem buracos.'}`);
+    } catch { setAviso('Não consegui salvar. Confira se entrou com a conta certa.'); }
+  }
+
+  // Exemplo: a semana de 14 a 20/dez como a responsável montou na tabela (cozinha).
+  // O salão vem do automático. Pode apagar depois ou refazer com "Montar o mês".
+  async function carregarExemplo() {
+    if (!window.confirm('Carregar a semana de 14 a 20/dez como na tabela que ela fez? Substitui o que estiver nessa semana.')) return;
+    const seg = '2026-12-14';
+    const t = JSON.parse(JSON.stringify(gerarMes(2026, 11, '5x2')[seg]));
+    const coz = {
+      henrique: ['', '', 'M', 'M', 'M', 'M', 'M'],
+      everton: ['', 'M', '', 'M', 'M', 'M', 'M'],
+      ramon: ['', '', 'N', 'N', 'N', 'N', 'N'],
+      jeferson: ['', 'N', '', 'N', 'N', 'N', 'N'],
+      brian: ['', 'CM', 'CM', 'CM', 'CM', 'CM', 'CM'],
+    };
+    Object.entries(coz).forEach(([id, dias]) => { t[id] = Object.fromEntries(dias.map((v, i) => [i, v])); });
+    try {
+      await salvarSemanas({ [seg]: t }, '5x2');
+      await Promise.all([['everton', 1, 840], ['henrique', 2, 840], ['everton', 3, 840], ['henrique', 3, 900]]
+        .map(([id, i, m]) => definirAlmoco(seg, id, i, m)));
+      setSegunda(new Date(2026, 11, 14, 12));
+      setVisao('semana');
+      setAviso('Exemplo carregado: semana de 14 a 20/dez (cozinha como na tabela dela).');
     } catch { setAviso('Não consegui salvar. Confira se entrou com a conta certa.'); }
   }
 
@@ -178,6 +202,7 @@ export default function Escala() {
         {editor && (
 <button className="botao claro" onClick={gerar}>✨ Montar o mês</button>
         )}
+        {editor && <button className="botao claro" onClick={carregarExemplo}>📄 Exemplo da tabela (14–20/dez)</button>}
         {editor && <button className="botao claro perigo" onClick={() => setDiaApagar(iso(new Date()))}>🗑 Apagar o dia</button>}
         {editor && <button className="botao claro perigo" onClick={apagarTodos}>🗑 Apagar tudo</button>}
         {dono && <button className="botao claro" onClick={() => setPainel(true)}>🔑 Quem pode editar</button>}
