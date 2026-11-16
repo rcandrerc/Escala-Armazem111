@@ -59,7 +59,7 @@ export const FUNCIONARIOS = [
   { id: 'joao', nome: 'João', funcao: 'Salão', turno: 'N' },
   // Freelancers: entram na mão para tapar buraco. Quem tem "fixo" o automático já escala
   // (dias: 1 = terça … 6 = domingo). "horas" muda o horário dele (minutos desde 0h).
-  { id: 'brian', nome: 'Brian', funcao: 'Freelancer', area: 'Cozinha', fixo: { turno: 'CM', dias: [1, 2, 3, 4, 5, 6] }, horas: { M: [480, 900] } },
+  { id: 'brian', nome: 'Bryan', funcao: 'Freelancer', area: 'Cozinha', fixo: { turno: 'CM', dias: [1, 2, 3, 4, 5, 6] }, horas: { M: [480, 900] } },
   { id: 'ciele', nome: 'Ciele', funcao: 'Freelancer', area: 'Cozinha' },
   { id: 'ariana', nome: 'Ariana', funcao: 'Freelancer', area: 'Cozinha' },
   { id: 'thiago-ramon', nome: 'Thiago Ramon', funcao: 'Freelancer', area: 'Salão', curto: 'TRa' },
@@ -135,3 +135,8 @@ export const hhmm = (min) => `${String(Math.floor(min / 60)).padStart(2, '0')}:$
 // Almoço: minuto de início (1h de duração) ou null.
 export const definirAlmoco = (segundaIso, funcId, dia, inicio) =>
   setDoc(doc(db, 'escala_semanas', segundaIso), { almoco: { [funcId]: { [dia]: inicio } } }, { merge: true });
+
+// Horário diferente só naquele dia: [entrada, saída] em minutos, ou null para voltar ao padrão.
+export const definirHorario = (segundaIso, funcId, dia, par) =>
+  setDoc(doc(db, 'escala_semanas', segundaIso), { horas: { [funcId]: { [dia]: par } } }, { merge: true });
+export const minDeHHMM = (s) => { const [h, m] = s.split(':').map(Number); return h * 60 + (m || 0); };

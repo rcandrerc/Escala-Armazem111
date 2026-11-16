@@ -17,7 +17,8 @@ export default function Horarios({ segunda, segundaIso, semanaDoc, editor, hojeI
   const pessoas = (i) => FUNCIONARIOS.map((f) => {
     const v = normalizarTurno(turnos[f.id]?.[i]);
     if (!v || areaDe(f, v) !== setor) return null;
-    const [ini, fim] = horarioDe(f, v, modelo);
+    const especial = semanaDoc?.horas?.[f.id]?.[i];
+    const [ini, fim] = Array.isArray(especial) ? especial : horarioDe(f, v, modelo);
     const al = almoco[f.id]?.[i];
     return { f, ini, fim, al: typeof al === 'number' ? al : null };
   }).filter(Boolean);

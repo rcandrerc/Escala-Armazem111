@@ -4,7 +4,7 @@ import { auth, configurado } from './firebase';
 import {
   DIAS, EMAIL_DONO, PROXIMO_TURNO, proximoFree, ehFree, areaDe, MODELOS, MODELO_PADRAO, rotuloTurno, normalizarTurno, iso, segundaDe, somarDias,
   FUNCIONARIOS, useSemana, useMes, useEditores,
-  definirTurno, definirAlmoco, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
+  definirTurno, definirAlmoco, definirHorario, horarioDe, hhmm, minDeHHMM, salvarSemanas, apagarTudo, apagarDia, adicionarEditor, removerEditor,
 } from './dados';
 import Horarios from './Horarios';
 import { gerarMes, melhorModelo, contarBuracos, FECHA_NA_SEGUNDA } from './gerar';
@@ -104,6 +104,7 @@ export default function Escala() {
       await salvarSemanas({ [seg]: t }, '5x2');
       await Promise.all([['everton', 1, 840], ['henrique', 2, 840], ['everton', 3, 840], ['henrique', 3, 900]]
         .map(([id, i, m]) => definirAlmoco(seg, id, i, m)));
+      await definirHorario(seg, 'brian', 3, [480, 840]);
       setSegunda(new Date(2026, 11, 14, 12));
       setVisao('semana');
       setAviso('Exemplo carregado: semana de 14 a 20/dez (cozinha como na tabela dela).');
@@ -203,7 +204,6 @@ export default function Escala() {
 <button className="botao claro" onClick={gerar}>✨ Montar o mês</button>
         )}
         {editor && <button className="botao claro" onClick={carregarExemplo}>📄 Exemplo da tabela (14–20/dez)</button>}
-        {editor && <button className="botao claro perigo" onClick={() => setDiaApagar(iso(new Date()))}>🗑 Apagar o dia</button>}
         {editor && <button className="botao claro perigo" onClick={apagarTodos}>🗑 Apagar tudo</button>}
         {dono && <button className="botao claro" onClick={() => setPainel(true)}>🔑 Quem pode editar</button>}
       </div>
@@ -241,6 +241,26 @@ export default function Escala() {
                   </div>
                 ))}
               </section>
+              {editor && !fechado(i) && (
+                <details className="horas-dia">
+                  <summary>🕒 Mudar horário de alguém só neste dia</summary>
+                  {FUNCIONARIOS.filter((f) => turnoDe(f, i) && turnoDe(f, i) !== 'MN').map((f) => {
+                    const pad = horarioDe(f, turnoDe(f, i), modeloSemana);
+                    const esp = semanaDoc?.horas?.[f.id]?.[i];
+                    const [ini, fim] = Array.isArray(esp) ? esp : pad;
+                    const salvar = (par) => definirHorario(segundaIso, f.id, i, par).catch(() => setAviso('Sem permissão para salvar.'));
+                    return (
+                      <div key={f.id} className={`hora-linha ${Array.isArray(esp) ? 'mudado' : ''}`}>
+                        <b>{f.nome}</b>
+                        <input type="time" value={hhmm(ini)} aria-label={`Entrada ${f.nome}`} onChange={(ev) => ev.target.value && salvar([minDeHHMM(ev.target.value), fim])} />
+                        <span>às</span>
+                        <input type="time" value={hhmm(fim)} aria-label={`Saída ${f.nome}`} onChange={(ev) => ev.target.value && salvar([ini, minDeHHMM(ev.target.value)])} />
+                        {Array.isArray(esp) && <button className="link" onClick={() => salvar(null)}>padrão</button>}
+                      </div>
+                    );
+                  })}
+                </details>
+              )}
             </div>
           </div>
         );
